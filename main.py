@@ -49,7 +49,7 @@ async def get_sharepoint_files(access_token: str):
         for file in disk_contents.json()["value"]:
             name = file["name"]
             print(f"Parsing {name}.")
-            csv_name = name.replace(".pdf", ".csv")
+            csv_name = f'substitutions/{name.replace(".pdf", ".csv")}'
             if os.path.exists(csv_name):
                 print("File already exists, deleting.")
                 os.remove(csv_name)
