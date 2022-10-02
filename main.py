@@ -161,7 +161,7 @@ async def get_timetable(response: Response, date: str | None, authorization: str
     all_classes = find_base_class(classes)
 
     for i, day in enumerate(sharepoint_days):
-        sharepoint_filename = f"nadomeščanje_{day}.csv"
+        sharepoint_filename = f"substitutions/nadomeščanje_{day}.csv"
         if not os.path.exists(sharepoint_filename):
             print(f"[SHAREPOINT] Could not find a file {sharepoint_filename}")
             continue
