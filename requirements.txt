@@ -1,2 +1,9 @@
 fastapi
 uvicorn[standard]
+tabula-py
+httpx
+aiofiles
+pydantic
+python-multipart
+git+https://github.com/mytja/gimsisapi
+git+https://github.com/mytja/lopolis-api
