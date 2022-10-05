@@ -205,12 +205,12 @@ async def get_absences(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
-    absences = await gimsis_session.fetch_absences(date, to_date=to_date, ni_obdelano=ni_obdelano, opraviceno=opraviceno, neopraviceno=neopraviceno, ne_steje=ne_steje, type=type)
+    absences = await gimsis_session.fetch_absences(from_date, to_date=to_date, ni_obdelano=ni_obdelano, opraviceno=opraviceno, neopraviceno=neopraviceno, ne_steje=ne_steje, type=type)
 
-    return {"absences": absences, "type", type}
+    return {"absences": absences, "type": type}
 
 
-@app.get("/absences", status_code=status.HTTP_200_OK)
+@app.get("/gradings", status_code=status.HTTP_200_OK)
 async def get_gradings(response: Response, authorization: str = Header()):
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
