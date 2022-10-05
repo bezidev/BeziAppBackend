@@ -189,11 +189,44 @@ async def get_timetable(response: Response, date: str | None, authorization: str
     return {"classes": classes, "days": days, "sharepoint_days": sharepoint_days}
 
 
+@app.get("/absences", status_code=status.HTTP_200_OK)
+async def get_absences(
+    response: Response,
+    from_date: str,
+    to_date: str = None,
+    ni_obdelano: bool = True,
+    opraviceno: bool = True,
+    neopraviceno: bool = True,
+    ne_steje: bool = True,
+    type: int = 1,
+    authorization: str = Header(),
+):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    gimsis_session = sessions[authorization]
+    absences = await gimsis_session.fetch_absences(date, to_date=to_date, ni_obdelano=ni_obdelano, opraviceno=opraviceno, neopraviceno=neopraviceno, ne_steje=ne_steje, type=type)
+
+    return {"absences": absences, "type", type}
+
+
+@app.get("/absences", status_code=status.HTTP_200_OK)
+async def get_gradings(response: Response, authorization: str = Header()):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    gimsis_session = sessions[authorization]
+    gradings = await gimsis_session.fetch_gradings()
+    return {"gradings": gradings}
+
+
 @app.post("/gimsis/login", status_code=status.HTTP_200_OK)
 async def login(username: str = Form(), password: str = Form()):
     global sessions
 
     gimsis = GimSisAPI(username, password)
+    await gimsis.login()
+
     session = base64.b64encode(os.urandom(64)).decode()
     sessions[session] = gimsis
 
