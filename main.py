@@ -156,6 +156,10 @@ async def get_timetable(response: Response, date: str | None, authorization: str
         return
     gimsis_session = sessions[authorization]
     classes, days = await gimsis_session.fetch_timetable(date)
+    if len(days.keys()) == 0:
+        # Session token has expired, new login is needed
+        await gimsis_session.login()
+        classes, days = await gimsis_session.fetch_timetable(date)
 
     sharepoint_days = translate_days_into_sharepoint(days)
     all_classes = find_base_class(classes)
