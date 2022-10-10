@@ -1,11 +1,12 @@
 import asyncio
 import base64
 import json
+import logging
 import os
 
 import aiofiles as aiofiles
 import httpx
-from fastapi import FastAPI, status, Header, Response, Form, Body
+from fastapi import FastAPI, status, Header, Response, Form
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -70,39 +71,42 @@ async def background_sharepoint_job(run_only_once: bool = False):
     print("[SHAREPOINT] Starting background Sharepoint job")
 
     while True:
-        if not os.path.exists("refresh_token.txt"):
-            await (await aiofiles.open("refresh_token.txt", "w+")).close()
-        token = ""
-        async with aiofiles.open("refresh_token.txt", "r+") as f:
-            token = await f.read()
-        if token == "":
-            print("[SHAREPOINT] No Microsoft refresh tokens were detected. Please sign into BežiApp Nadomeščanja to "
-                  "access Sharepoint and retrieve OAUTH refresh token")
-            await asyncio.sleep(30)
-            continue
+        try:
+            if not os.path.exists("refresh_token.txt"):
+                await (await aiofiles.open("refresh_token.txt", "w+")).close()
+            token = ""
+            async with aiofiles.open("refresh_token.txt", "r+") as f:
+                token = await f.read()
+            if token == "":
+                print("[SHAREPOINT] No Microsoft refresh tokens were detected. Please sign into BežiApp Nadomeščanja to "
+                      "access Sharepoint and retrieve OAUTH refresh token")
+                await asyncio.sleep(30)
+                continue
 
-        body = {
-            "client_id": MS_OAUTH_ID,
-            "client_secret": MS_OAUTH_SECRET,
-            "refresh_token": token,
-            "scope": SCOPE,
-            "grant_type": "refresh_token",
-        }
+            body = {
+                "client_id": MS_OAUTH_ID,
+                "client_secret": MS_OAUTH_SECRET,
+                "refresh_token": token,
+                "scope": SCOPE,
+                "grant_type": "refresh_token",
+            }
 
-        async with httpx.AsyncClient() as client:
-            response = (await client.post("https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
-                                          data=body)).json()
-            access_token = response["access_token"]
-            refresh_token = response["refresh_token"]
-            async with aiofiles.open("refresh_token.txt", "w+") as f:
-                await f.write(refresh_token)
+            async with httpx.AsyncClient() as client:
+                response = (await client.post("https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
+                                              data=body)).json()
+                access_token = response["access_token"]
+                refresh_token = response["refresh_token"]
+                async with aiofiles.open("refresh_token.txt", "w+") as f:
+                    await f.write(refresh_token)
 
-            await get_sharepoint_files(access_token)
+                await get_sharepoint_files(access_token)
 
-        if run_only_once:
-            return
+            if run_only_once:
+                return
 
-        await asyncio.sleep(3600)
+            await asyncio.sleep(3600)
+        except Exception as e:
+            print(f"[ERROR][SharePoint] Exception while fetching SharePoint files: {e}")
 
 
 @app.get("/microsoft/oauth2/url")
