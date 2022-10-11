@@ -1,7 +1,6 @@
 import asyncio
 import base64
 import json
-import logging
 import os
 
 import aiofiles as aiofiles
@@ -169,30 +168,37 @@ async def get_timetable(response: Response, date: str | None, authorization: str
     all_classes = find_base_class(classes)
 
     for i, day in enumerate(sharepoint_days):
-        sharepoint_filename = f"substitutions/nadomeščanje_{day}.csv"
-        if not os.path.exists(sharepoint_filename):
-            print(f"[SHAREPOINT] Could not find a file {sharepoint_filename}")
-            continue
-        async with aiofiles.open(sharepoint_filename, "r") as f:
-            for line in await f.readlines():
-                csv_values = line.split(",")
-                if not csv_values[1] in all_classes:
-                    continue
-                if " - " in csv_values[0]:
-                    h = csv_values[0].split(" - ")
-                    hours = range(int(h[0]), int(h[1]) + 1)
-                else:
-                    hours = [int(csv_values[0])]
-                print(hours)
-                for n in classes[i].keys():
-                    if classes[i][n].ura in hours:
-                        classes[i][n].profesor = csv_values[3]
-                        classes[i][n].ucilnica = csv_values[5]
-                        classes[i][n].kratko_ime = csv_values[7]
-                        classes[i][n].ime = csv_values[7]
-                        classes[i][n].opis = csv_values[8]
-                        classes[i][n].tip_izostanka = csv_values[9]
-                        classes[i][n].fixed_by_sharepoint = True
+        sharepoint_filenames = [
+            f"substitutions/nadomeščanje_{day}.csv",
+            f"substitutions/nadomeščanje_{day}_intranet.csv"
+        ]
+        for sharepoint_filename in sharepoint_filenames:
+            if not os.path.exists(sharepoint_filename):
+                print(f"[SHAREPOINT] Could not find a file {sharepoint_filename}")
+                continue
+            async with aiofiles.open(sharepoint_filename, "r") as f:
+                for line in await f.readlines():
+                    csv_values = line.split(",")
+                    if not csv_values[1] in all_classes:
+                        continue
+                    if " - " in csv_values[0]:
+                        h = csv_values[0].split(" - ")
+                        hours = range(int(h[0]), int(h[1]) + 1)
+                    else:
+                        hours = [int(csv_values[0])]
+                    print(hours)
+                    for n in classes[i].keys():
+                        if classes[i][n].ura in hours:
+                            classes[i][n].profesor = csv_values[3]
+                            classes[i][n].ucilnica = csv_values[5]
+                            classes[i][n].kratko_ime = csv_values[7]
+                            classes[i][n].ime = csv_values[7]
+                            classes[i][n].opis = csv_values[8]
+                            try:
+                                classes[i][n].tip_izostanka = csv_values[9]
+                            except:
+                                classes[i][n].tip_izostanka = "Tip izostanka ni dan"
+                            classes[i][n].fixed_by_sharepoint = True
 
     return {"classes": classes, "days": days, "sharepoint_days": sharepoint_days}
 
