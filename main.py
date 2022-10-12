@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import csv
 import json
 import os
 
@@ -170,6 +171,7 @@ async def get_timetable(response: Response, date: str | None, authorization: str
     for i, day in enumerate(sharepoint_days):
         sharepoint_filenames = [
             f"substitutions/nadomeščanje_{day}.csv",
+            f"substitutions/nadomeščanje_{day}..csv",
             f"substitutions/nadomeščanje_{day}_intranet.csv"
         ]
         for sharepoint_filename in sharepoint_filenames:
@@ -177,8 +179,8 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                 print(f"[SHAREPOINT] Could not find a file {sharepoint_filename}")
                 continue
             async with aiofiles.open(sharepoint_filename, "r") as f:
-                for line in await f.readlines():
-                    csv_values = line.split(",")
+                lines = csv.reader(await f.readlines(), delimiter=',')
+                for csv_values in lines:
                     if not csv_values[1] in all_classes:
                         continue
                     if " - " in csv_values[0]:
