@@ -236,6 +236,16 @@ async def get_gradings(response: Response, authorization: str = Header()):
     return {"gradings": gradings}
 
 
+@app.get("/grades", status_code=status.HTTP_200_OK)
+async def get_grades(response: Response, authorization: str = Header()):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    gimsis_session = sessions[authorization]
+    grades = await gimsis_session.fetch_grades()
+    return {"grades": grades}
+
+
 @app.post("/gimsis/login", status_code=status.HTTP_200_OK)
 async def login(username: str = Form(), password: str = Form()):
     global sessions
