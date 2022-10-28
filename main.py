@@ -1,8 +1,10 @@
 import asyncio
 import base64
+import copy
 import csv
 import json
 import os
+import re
 
 import aiofiles as aiofiles
 import httpx
@@ -165,21 +167,31 @@ async def get_timetable(response: Response, date: str | None, authorization: str
         await gimsis_session.login()
         classes, days = await gimsis_session.fetch_timetable(date)
 
+    classes_archive = copy.deepcopy(classes)
+
     sharepoint_days = translate_days_into_sharepoint(days)
     all_classes = find_base_class(classes)
 
     for i, day in enumerate(sharepoint_days):
+        for n in classes[i].keys():
+            classes[i][n].opozori = None
+
         sharepoint_filenames = [
             f"substitutions/nadomeščanje_{day}.csv",
             f"substitutions/nadomeščanje_{day}..csv",
             f"substitutions/nadomeščanje_{day}.novo.csv",
-            f"substitutions/nadomeščanje_{day}_intranet.csv"
+            f"substitutions/nadomeščanje_{day}_intranet.csv",
+            f"substitutions/nadomescanje_{day}.csv",
+            f"substitutions/nadomescanje_{day}..csv",
+            f"substitutions/nadomescanje_{day}.novo.csv",
+            f"substitutions/nadomescanje_{day}_intranet.csv"
         ]
         for sharepoint_filename in sharepoint_filenames:
             if not os.path.exists(sharepoint_filename):
                 print(f"[SHAREPOINT] Could not find a file {sharepoint_filename}")
                 continue
             async with aiofiles.open(sharepoint_filename, "r") as f:
+                print(f"[SHAREPOINT] File {sharepoint_filename} exists.")
                 lines = csv.reader(await f.readlines(), delimiter=',')
                 for csv_values in lines:
                     if not csv_values[1] in all_classes:
@@ -191,11 +203,29 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                         hours = [int(csv_values[0])]
                     print(hours)
                     for n in classes[i].keys():
+                        try:
+                            sharepoint_gimsis_name = re.findall(r'\((.*?)\)', classes[i][n].ime)[0]
+                        except Exception as e:
+                            print(f"[E] {e} {classes[i][n].ime}")
                         if classes[i][n].ura in hours:
+                            if "vaje" in sharepoint_gimsis_name:
+                                if sharepoint_gimsis_name not in csv_values[6] and (classes[i][n].opozori is None or classes[i][n].opozori):
+                                    print(sharepoint_gimsis_name, classes[i][n].ime, csv_values)
+                                    classes[i][n].opozori = True
+                                    continue
+                                else:
+                                    classes[i][n].opozori = False
+                            classes[i][n].gimsis_kratko_ime = classes_archive[i][n].kratko_ime
+                            classes[i][n].gimsis_ime = classes_archive[i][n].ime
+                            if csv_values[6] != csv_values[7]:
+                                classes[i][n].kratko_ime = csv_values[7]
                             classes[i][n].profesor = csv_values[3]
-                            classes[i][n].ucilnica = csv_values[5]
-                            classes[i][n].kratko_ime = csv_values[7]
-                            classes[i][n].ime = csv_values[7]
+                            classes[i][n].odpade = "---" in classes[i][n].profesor
+                            try:
+                                classes[i][n].ucilnica = f"Učilnica {int(csv_values[5])}"
+                            except:
+                                classes[i][n].ucilnica = csv_values[5]
+                            classes[i][n].ime = f"{classes[i][n].kratko_ime} ({csv_values[7]})"
                             classes[i][n].opis = csv_values[8]
                             try:
                                 classes[i][n].tip_izostanka = csv_values[9]
@@ -244,6 +274,9 @@ async def get_grades(response: Response, authorization: str = Header()):
         return
     gimsis_session = sessions[authorization]
     grades = await gimsis_session.fetch_grades()
+    if len(grades) == 0:
+        await gimsis_session.login()
+        grades = await gimsis_session.fetch_grades()
     return {"grades": grades}
 
 
