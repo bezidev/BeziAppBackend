@@ -280,7 +280,8 @@ async def get_gradings_ical(username: str, password: str):
     for grading in gradings:
         e = Event()
         e.name = grading.predmet
-        e.description = grading.opis
+        desc = grading.opis.split("\r\n")
+        e.description = f"{desc[0].strip()}\n{desc[1].strip()}"
         e.begin = datetime.strptime(grading.datum, '%d.%m.%Y').strftime("%Y.%m.%d")
         e.location = "46.064167;14.511667"
         c.events.add(e)
