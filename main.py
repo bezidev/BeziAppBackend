@@ -5,12 +5,15 @@ import csv
 import json
 import os
 import re
+import io
 
 import aiofiles as aiofiles
 import httpx
 from fastapi import FastAPI, status, Header, Response, Form
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from ics import Calendar, Event
+from datetime import datetime
 
 from gimsisapi import GimSisAPI
 from lopolis import LoPolisAPI
@@ -265,6 +268,23 @@ async def get_gradings(response: Response, authorization: str = Header()):
     gimsis_session = sessions[authorization]
     gradings = await gimsis_session.fetch_gradings()
     return {"gradings": gradings}
+
+
+@app.get("/gradings/calendar", status_code=status.HTTP_200_OK)
+async def get_gradings_ical(username: str, password: str):
+    gimsis = GimSisAPI(username, password)
+    await gimsis.login()
+    gradings = await gimsis.fetch_gradings()
+    c = Calendar()
+    c.creator = "BežiApp/GimSIS"
+    for grading in gradings:
+        e = Event()
+        e.name = grading.predmet
+        e.description = grading.opis
+        e.begin = datetime.strptime(grading.datum, '%d.%m.%Y').strftime("%Y.%m.%d")
+        e.location = "46.064167;14.511667"
+        c.events.add(e)
+    return StreamingResponse(io.StringIO(c.serialize()), media_type="text/calendar")
 
 
 @app.get("/grades", status_code=status.HTTP_200_OK)
