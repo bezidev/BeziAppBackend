@@ -282,7 +282,7 @@ async def get_gradings_ical(username: str, password: str):
         e.name = grading.predmet
         desc = grading.opis.split("\r\n")
         e.description = f"{desc[0].strip()}\n{desc[1].strip()}"
-        e.begin = datetime.strptime(grading.datum, '%d.%m.%Y').strftime("%Y.%m.%d")
+        e.begin = datetime.strptime(grading.datum, '%d.%m.%Y').strftime("%Y.%m.%d 060000.00")
         e.location = "46.064167;14.511667"
         c.events.add(e)
     return StreamingResponse(io.StringIO(c.serialize()), media_type="text/calendar")
