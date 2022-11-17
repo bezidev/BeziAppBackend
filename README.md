@@ -18,7 +18,7 @@ importing them directly into GimSIS, which would've been a better solution.
 
 Instead, us, the students, need to combine timetables by ourselves, which can be a hassle.
 
-BUT, the story doesn't end here. If you though it was bad, let's just add a cherry on top.
+BUT, the story doesn't end here. If you thought it was bad, let's just add a cherry on top.
 
 What does Gimnazija Bežigrad use for meal ordering and student ID cards? You guessed it right. It's not Bežigrad vulnerable software - it's even worse.
 It's called [Lo.Polis](https://lopolis.si) and uses the most outdated design I've seen in my entire life.
