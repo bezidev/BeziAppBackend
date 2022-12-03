@@ -8,3 +8,6 @@ python-multipart
 ics
 git+https://github.com/mytja/gimsisapi
 git+https://github.com/mytja/lopolis-api
+sqlalchemy
+asyncpg
+
