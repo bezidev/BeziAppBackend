@@ -230,7 +230,10 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                                 classes[i][n].ucilnica = f"Učilnica {int(csv_values[5])}"
                             except:
                                 classes[i][n].ucilnica = csv_values[5]
-                            classes[i][n].ime = f"{classes[i][n].kratko_ime} ({csv_values[7]})"
+                            if classes[i][n].kratko_ime == csv_values[7]:
+                                classes[i][n].ime = csv_values[7]
+                            else:
+                                classes[i][n].ime = f"{classes[i][n].kratko_ime} ({csv_values[7]})"
                             classes[i][n].opis = csv_values[8]
                             try:
                                 classes[i][n].tip_izostanka = csv_values[9]
