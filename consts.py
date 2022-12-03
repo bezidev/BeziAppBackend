@@ -34,7 +34,8 @@ ALLOWED_EXTENSIONS = [
 
 DATABASE_USER = os.environ["POSTGRES_USER"]
 DATABASE_PASSWORD = os.environ["POSTGRES_PASSWORD"]
-DATABASE_CONNECTION = f"postgresql+asyncpg://{DATABASE_USER}:{DATABASE_PASSWORD}@127.0.0.1:5432/BeziAppDB"
+DATABASE = os.environ["POSTGRES"]
+DATABASE_CONNECTION = f"postgresql+asyncpg://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE}/BeziAppDB"
 
 engine = create_async_engine(DATABASE_CONNECTION)
 async_session = sessionmaker(
