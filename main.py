@@ -377,6 +377,7 @@ async def set_meals(response: Response, month: str, year: str, authorization: st
 async def upload_new_note(
         response: Response,
         file: UploadFile,
+        description: str = Form(),
         subject: str = Form(),
         teacher: str = Form(),
         class_name: str = Form(),
@@ -400,6 +401,7 @@ async def upload_new_note(
         id=id,
         filename=file.filename,
         username=gimsis_session.username,
+        description=description,
         filepath=file_path,
         subject=subject,
         teacher=teacher,
@@ -424,12 +426,12 @@ async def get_notes(response: Response, authorization: str = Header()):
     uploads_json = []
     for i in uploads:
         i = i[0]
-        uploads_json.append(UploadJSON(i.id, i.filename, i.subject, i.teacher,  i.class_name, i.class_year, i.type, i.username == gimsis_session.username))
+        uploads_json.append(UploadJSON(i.id, i.filename, i.description, i.subject, i.teacher,  i.class_name, i.class_year, i.type, i.username == gimsis_session.username))
     return uploads_json
 
 
 @app.delete("/notes", status_code=status.HTTP_200_OK)
-async def get_notes(response: Response, id: str = Form(), authorization: str = Header()):
+async def delete_note(response: Response, id: str = Form(), authorization: str = Header()):
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
@@ -455,7 +457,7 @@ async def get_notes(response: Response, id: str = Form(), authorization: str = H
 
 
 @app.get("/notes/get", status_code=status.HTTP_200_OK)
-async def get_notes(response: Response, id: str, authorization: str = Header()):
+async def get_note(response: Response, id: str, authorization: str = Header()):
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return

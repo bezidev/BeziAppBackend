@@ -50,6 +50,7 @@ class Upload(Base):
     id = Column(String(60), primary_key=True)
     filename = Column(String(100), unique=True)
     username = Column(String(60))
+    description = Column(String(200))
     filepath = Column(String(150))
     subject = Column(String(60))
     teacher = Column(String(60))
@@ -60,10 +61,11 @@ class Upload(Base):
 
 
 class UploadJSON:
-    def __init__(self, id: str, filename: str, subject: str, teacher: str, class_name: str, class_year: str, type: str,
+    def __init__(self, id: str, filename: str, description: str, subject: str, teacher: str, class_name: str, class_year: str, type: str,
                  uploaded_by_me: bool):
         self.id = id
         self.filename = filename
+        self.description = description
         self.subject = subject
         self.teacher = teacher
         self.class_name = class_name
