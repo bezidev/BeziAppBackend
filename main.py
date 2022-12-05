@@ -23,7 +23,7 @@ import tabula
 from sqlalchemy import select, delete
 
 from consts import MS_OAUTH_ID, SCOPE, MS_OAUTH_SECRET, engine, Base, Upload, async_session, UploadJSON, \
-    ALLOWED_EXTENSIONS
+    ALLOWED_EXTENSIONS, TarotGame
 
 app = FastAPI()
 
@@ -469,6 +469,28 @@ async def get_note(response: Response, id: str, authorization: str = Header()):
             return
         upload = upload[0]
         return FileResponse(upload.filepath)
+
+
+@app.post("/tarot/contest/:id", status_code=status.HTTP_200_OK)
+async def new_game(
+        response: Response, contest_id: str,
+        gamemode: int = Form(),
+        trula: int = Form(),
+        kralji: int = Form(),
+        pagat: int = Form(),
+        kralj: int = Form(),
+        valat: int = Form(),
+        barvni_valat: int = Form(),
+        v_tri: int = Form(),
+        authorization: str = Header(),
+):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    gimsis_session = sessions[authorization]
+
+    game_id = str(uuid.uuid4())
+    game = TarotGame(id=game_id, )
 
 
 @app.on_event("startup")
