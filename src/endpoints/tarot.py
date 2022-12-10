@@ -58,7 +58,7 @@ async def new_game(
 
         if len(j) > 4 or len(j) < 3:
             response.status_code = status.HTTP_409_CONFLICT
-            return
+            return "Cannot play with less than 3 players or more than 4 players."
 
         v_tri = len(j) == 3
 
@@ -208,6 +208,11 @@ async def contest(
         all_contestants = {}
 
         games = (await session.execute(select(TarotGame).filter_by(contest_id=id))).all()
+
+        if len(games) == 0:
+            for contestant in contestants:
+                all_contestants[contestant] = {"name": contestant, "total": 0, "radlci_status": 0}
+
         games_json = []
         for game in games:
             game = game[0]
