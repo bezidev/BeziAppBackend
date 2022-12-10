@@ -205,6 +205,8 @@ async def contest(
 
         radlci: dict[str, int] = {}
 
+        statistics = {}
+
         all_contestants = {}
 
         games = (await session.execute(select(TarotGame).filter_by(contest_id=id))).all()
@@ -213,14 +215,40 @@ async def contest(
             for contestant in contestants:
                 all_contestants[contestant] = {"name": contestant, "total": 0, "radlci_status": 0}
 
+        cs2 = contestants
+
         games_json = []
         for game in games:
             game = game[0]
             contestants_json = {}
             contestants = (await session.execute(select(TarotGamePlayer).filter_by(game_id=game.id))).all()
+
+            #omg this code is bloat & unreadable
+            for contestant in cs2:
+                if statistics.get(contestant) is None:
+                    statistics[contestant] = {
+                        "iger_odigranih": 0,
+                        "iger_igral": 0,
+                        "iger_zmagal": 0,
+                        "tock_skupaj": 0,
+                        "tipi_iger": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        "points_overtime": [0],
+                    }
+                ok = False
+                for cs in contestants:
+                    if cs[0].name == contestant:
+                        ok = True
+                        break
+                if ok:
+                    continue
+                print(contestant)
+                statistics[contestant]["points_overtime"].append(statistics[contestant]["points_overtime"][-1])
+
             for contestant in contestants:
                 contestant = contestant[0]
                 difference = contestant.difference
+
+                statistics[contestant.name]["iger_odigranih"] += 1
 
                 contestants_json[contestant.name] = {"radlc_uporabljen": False, "radlci_status": 0, "razlika": 0}
 
@@ -237,6 +265,11 @@ async def contest(
                             else:
                                 difference = -70
                     difference = -abs(difference)
+
+                # pri klopu se ne igra
+                if contestant.playing or game.gamemode == 12:
+                    statistics[contestant.name]["iger_igral"] += 1
+                    statistics[contestant.name]["tipi_iger"][game.gamemode] += 1
 
                 if contestant.playing:
                     # bog ne daj, da dobiš minusa
@@ -345,6 +378,12 @@ async def contest(
                 contestants_json[contestant.name]["radlci_status"] = radlci[contestant.name]
                 contestants_json[contestant.name]["razlika"] = difference
 
+                statistics[contestant.name]["tock_skupaj"] += difference
+                if difference > 0:
+                    statistics[contestant.name]["iger_zmagal"] += 1
+
+                statistics[contestant.name]["points_overtime"].append(statistics[contestant.name]["points_overtime"][-1] + difference)
+
                 if all_contestants.get(contestant.name) is None:
                     all_contestants[contestant.name] = {"name": contestant.name, "total": 0,
                                                         "radlci_status": radlci[contestant.name]}
@@ -352,5 +391,6 @@ async def contest(
                 all_contestants[contestant.name]["radlci_status"] = radlci[contestant.name]
                 all_contestants[contestant.name]["total"] += difference
             games_json.append({"id": game.id, "type": game.gamemode, "contestants": contestants_json})
+        print(statistics)
         return {"games": games_json, "name": contest.name, "description": contest.description, "id": contest.id,
-                "status": all_contestants, "contestants": contest.contestants}
+                "status": all_contestants, "contestants": contest.contestants, "statistics": statistics}
