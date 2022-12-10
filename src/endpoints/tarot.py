@@ -3,34 +3,41 @@ import time
 import uuid
 
 from fastapi import Form, Header, status, APIRouter
-from sqlalchemy import select
+from pydantic import BaseModel
+from sqlalchemy import select, delete
 from fastapi.responses import Response
 
 from .consts import sessions, async_session, TarotContest, TarotGamePlayer, TarotGame, GAMEMODES
 
-
 tarot = APIRouter()
 
 
-@tarot.post("/tarot/contest/:id", status_code=status.HTTP_200_OK)
+class TarotGameAPI(BaseModel):
+    gamemode: int
+    trula_zbral: str
+    trula_napovedal: str
+    kralji_zbral: str
+    kralji_napovedal: str
+    pagat_zbral: str
+    pagat_napovedal: str
+    kralj_zbral: str
+    kralj_napovedal: str
+    valat_zbral: str
+    valat_napovedal: str
+    barvni_valat_zbral: str
+    barvni_valat_napovedal: str
+    contestants: str
+    izgubil_monda: str
+
+
+@tarot.post("/tarot/contest/{id}", status_code=status.HTTP_200_OK)
 async def new_game(
-        response: Response, contest_id: str,
-        gamemode: int = Form(),
-        trula_zbral: str = Form(),
-        trula_napovedal: str = Form(),
-        kralji_zbral: str = Form(),
-        kralji_napovedal: str = Form(),
-        pagat_zbral: str = Form(),
-        pagat_napovedal: str = Form(),
-        kralj_zbral: str = Form(),
-        kralj_napovedal: str = Form(),
-        valat_zbral: str = Form(),
-        valat_napovedal: str = Form(),
-        barvni_valat_zbral: str = Form(),
-        barvni_valat_napovedal: str = Form(),
-        contestants: str = Form(),
+        response: Response,
+        id: str,
+        game: TarotGameAPI,
         authorization: str = Header(),
 ):
+    print(game.contestants)
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
@@ -47,7 +54,7 @@ async def new_game(
 
         contestants_in_contest = json.loads(contest.contestants)
 
-        j = json.loads(contestants)
+        j = json.loads(game.contestants)
 
         if len(j) > 4 or len(j) < 3:
             response.status_code = status.HTTP_409_CONFLICT
@@ -59,31 +66,33 @@ async def new_game(
             if contestant["username"] not in contestants_in_contest:
                 continue
             contestant_id = str(uuid.uuid4())
-            contestant_db = TarotGamePlayer(id=contestant_id, game_id=game_id, name=contestant["username"], difference=int(contestant["difference"]), playing=contestant["playing"])
+            contestant_db = TarotGamePlayer(id=contestant_id, game_id=game_id, name=contestant["username"],
+                                            difference=int(contestant["difference"]), playing=contestant["playing"])
             session.add(contestant_db)
 
-        game = TarotGame(
+        g = TarotGame(
             id=game_id,
-            contest_id=contest_id,
-            gamemode=gamemode,
-            trulo_zbral=trula_zbral,
-            trulo_napovedal=trula_napovedal,
-            kralji_zbral=kralji_zbral,
-            kralji_napovedal=kralji_napovedal,
-            pagat_zbral=pagat_zbral,
-            pagat_napovedal=pagat_napovedal,
-            kralj_zbral=kralj_zbral,
-            kralj_napovedal=kralj_napovedal,
-            valat_zbral=valat_zbral,
-            valat_napovedal=valat_napovedal,
-            barvni_valat_zbral=barvni_valat_zbral,
-            barvni_valat_napovedal=barvni_valat_napovedal,
+            contest_id=id,
+            gamemode=game.gamemode,
+            trulo_zbral=game.trula_zbral,
+            trulo_napovedal=game.trula_napovedal,
+            kralji_zbral=game.kralji_zbral,
+            kralji_napovedal=game.kralji_napovedal,
+            pagat_zbral=game.pagat_zbral,
+            pagat_napovedal=game.pagat_napovedal,
+            kralj_zbral=game.kralj_zbral,
+            kralj_napovedal=game.kralj_napovedal,
+            valat_zbral=game.valat_zbral,
+            valat_napovedal=game.valat_napovedal,
+            barvni_valat_zbral=game.barvni_valat_zbral,
+            barvni_valat_napovedal=game.barvni_valat_napovedal,
+            izgubil_monda=game.izgubil_monda,
             v_tri=v_tri,
             initializer=gimsis_session.username,
             played_at=int(time.time()),
         )
 
-        session.add(game)
+        session.add(g)
         await session.commit()
 
 
@@ -108,9 +117,11 @@ async def new_contest(
             if len(i.split(".")) != 2:
                 response.status_code = status.HTTP_400_BAD_REQUEST
                 return
+        if gimsis_session.username not in cs:
+            cs.append(gimsis_session.username)
         contest = TarotContest(
             id=str(uuid.uuid4()),
-            contestants=contestants,
+            contestants=json.dumps(cs),
             name=name,
             description=description,
             is_private=is_private,
@@ -135,6 +146,7 @@ async def my_contests(
         contests = (await session.execute(select(TarotContest))).all()
         contests_user = []
         for contest in contests:
+            contest = contest[0]
             contestants = json.loads(contest.contestants)
             if gimsis_session.username not in contestants:
                 continue
@@ -142,10 +154,36 @@ async def my_contests(
         return contests_user
 
 
-@tarot.get("/tarot/contest/:id", status_code=status.HTTP_200_OK)
-async def my_contests(
+@tarot.delete("/tarot/game/{id}", status_code=status.HTTP_200_OK)
+async def delete_game(
         response: Response,
-        id: str = Header(),
+        id: str,
+        authorization: str = Header(),
+):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    gimsis_session = sessions[authorization]
+
+    async with async_session() as session:
+        contestants = (await session.execute(select(TarotGamePlayer).filter_by(game_id=id))).all()
+        ok = False
+        for contestant in contestants:
+            if contestant[0].name == gimsis_session.username:
+                ok = True
+                break
+        if not ok:
+            response.status_code = status.HTTP_403_FORBIDDEN
+            return
+        await session.execute(delete(TarotGamePlayer).where(TarotGamePlayer.game_id == id))
+        await session.execute(delete(TarotGame).where(TarotGame.id == id))
+        await session.commit()
+
+
+@tarot.get("/tarot/contest/{id}", status_code=status.HTTP_200_OK)
+async def contest(
+        response: Response,
+        id: str,
         authorization: str = Header(),
 ):
     if authorization == "" or sessions.get(authorization) is None:
@@ -155,6 +193,7 @@ async def my_contests(
 
     async with async_session() as session:
         contest = (await session.execute(select(TarotContest).filter_by(id=id))).first()
+        print(contest, id)
         if contest is None or contest[0] is None:
             response.status_code = status.HTTP_404_NOT_FOUND
             return
@@ -184,12 +223,30 @@ async def my_contests(
                 if radlci.get(contestant.name) is None:
                     radlci[contestant.name] = 0
 
+                if game.gamemode == 12:
+                    for con in contestants:
+                        # Če nekdo pobere vsaj polovico točk, je avtomatično dobil -70, medtem ko vsi ostali 0
+                        if abs(con[0].difference) >= 35:
+                            if contestant.name != con[0].name:
+                                difference = 0
+                            else:
+                                difference = -70
+                    difference = -abs(difference)
+
                 if contestant.playing:
                     # bog ne daj, da dobiš minusa
-                    if difference <= 0:
-                        contestant -= GAMEMODES[game.gamemode]
+                    if game.gamemode == 3 or game.gamemode == 7 or 9 <= game.gamemode <= 11:
+                        # pri beračih + pikolu in valatih se ne šteje kok si pobral
+                        # temveč samo če si uspešno dokončal gamemode
+                        if difference <= 0:
+                            difference = -GAMEMODES[game.gamemode]
+                        else:
+                            difference = GAMEMODES[game.gamemode]
                     else:
-                        contestant += GAMEMODES[game.gamemode]
+                        if difference <= 0:
+                            difference -= GAMEMODES[game.gamemode]
+                        else:
+                            difference += GAMEMODES[game.gamemode]
 
                     # omg don't bully me for this logic
                     if game.trulo_zbral != "":
@@ -265,12 +322,16 @@ async def my_contests(
                             else:
                                 difference = -125
 
-                    # lol let's boost the difference (radlci go brrrrrrrrrrrrrrrrrrrrrrr)
-                    if radlci[contestant.name] > 0:
-                        difference *= 2
-                        if difference > 0:
-                            radlci[contestant.name] -= 1
-                            contestants_json[contestant.name]["radlc_uporabljen"] = True
+                # lol let's boost the difference (radlci go brrrrrrrrrrrrrrrrrrrrrrr)
+                if radlci[contestant.name] > 0 and difference != 0:
+                    difference *= 2
+                    if difference > 0:
+                        radlci[contestant.name] -= 1
+                        contestants_json[contestant.name]["radlc_uporabljen"] = True
+
+                # izguba monda
+                if contestant.name == game.izgubil_monda:
+                    difference -= 21
 
                 # dejmo radlce vsem tem bogim ljudem
                 if 7 <= game.gamemode <= 12:
@@ -280,9 +341,11 @@ async def my_contests(
                 contestants_json[contestant.name]["razlika"] = difference
 
                 if all_contestants.get(contestant.name) is None:
-                    all_contestants[contestant.name] = {"name": contestant.name, "total": difference, "radlci_status": radlci[contestant.name]}
+                    all_contestants[contestant.name] = {"name": contestant.name, "total": 0,
+                                                        "radlci_status": radlci[contestant.name]}
 
                 all_contestants[contestant.name]["radlci_status"] = radlci[contestant.name]
                 all_contestants[contestant.name]["total"] += difference
             games_json.append({"id": game.id, "type": game.gamemode, "contestants": contestants_json})
-        return {"games": games, "name": contest.name, "description": contest.description, "id": contest.id, "status": all_contestants}
+        return {"games": games_json, "name": contest.name, "description": contest.description, "id": contest.id,
+                "status": all_contestants, "contestants": contest.contestants}

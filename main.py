@@ -48,12 +48,21 @@ async def get_timetable(response: Response, date: str | None, authorization: str
         await gimsis_session.login()
         classes, days = await gimsis_session.fetch_timetable(date)
 
+    gradings = await gimsis_session.fetch_gradings()
+
     classes_archive = copy.deepcopy(classes)
 
     sharepoint_days = translate_days_into_sharepoint(days)
     all_classes = find_base_class(classes)
 
     for i, day in enumerate(sharepoint_days):
+        for grading in gradings:
+            if day not in grading.datum:
+                continue
+            for n in classes[i].keys():
+                if classes[i][n].kratko_ime.lower() in grading.predmet.lower():
+                    classes[i][n].ocenjevanje = True
+                    classes[i][n].ocenjevanje_details = grading
         for n in classes[i].keys():
             classes[i][n].opozori = None
 

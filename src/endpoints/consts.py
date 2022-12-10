@@ -121,6 +121,7 @@ class TarotGame(Base):
     valat_zbral = Column(String(100))
     barvni_valat_napovedal = Column(String(100))
     barvni_valat_zbral = Column(String(100))
+    izgubil_monda = Column(String(100))
 
     # Defaulta na v 4
     v_tri = Column(Boolean)
