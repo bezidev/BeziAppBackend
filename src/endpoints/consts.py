@@ -87,6 +87,7 @@ class TarotGamePlayer(Base):
 # 10: Valat         500
 # 11: Barvni valat  125
 # 12: Klop          [posebna igra]
+# 13: Renons        -70
 GAMEMODES = {
     0: 10,
     1: 20,
@@ -101,6 +102,7 @@ GAMEMODES = {
     10: 500,
     11: 125,
     12: 0,
+    13: -70,
 }
 
 
