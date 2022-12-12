@@ -170,7 +170,7 @@ async def delete_game(
     gimsis_session = sessions[authorization]
 
     async with async_session() as session:
-        game = (await session.execute(select(TarotGame).filter_by(game_id=id))).first()
+        game = (await session.execute(select(TarotGame).filter_by(id=id))).first()
         contest = (await session.execute(select(TarotContest).filter_by(id=game[0].contest_id))).first()
         if gimsis_session.username not in json.loads(contest.contestants):
             response.status_code = status.HTTP_403_FORBIDDEN
