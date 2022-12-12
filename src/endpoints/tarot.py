@@ -211,9 +211,8 @@ async def contest(
 
         games = (await session.execute(select(TarotGame).filter_by(contest_id=id))).all()
 
-        if len(games) == 0:
-            for contestant in contestants:
-                all_contestants[contestant] = {"name": contestant, "total": 0, "radlci_status": 0}
+        for contestant in contestants:
+            all_contestants[contestant] = {"name": contestant, "total": 0, "radlci_status": 0}
 
         cs2 = contestants
 
