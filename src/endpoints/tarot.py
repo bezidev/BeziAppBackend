@@ -223,21 +223,37 @@ async def add_person(
         contest = (await session.execute(select(TarotContest).filter(TarotContest.id == id))).first()
         contest = contest[0]
         contestants = json.loads(contest.contestants)
+        if gimsis_session.username not in contestants:
+            response.status_code = status.HTTP_403_FORBIDDEN
+            return
+        if person not in contestants:
+            contestants.append(person.person)
+        contest.contestants = json.dumps(contestants)
+        await session.commit()
+
+
+@tarot.post("/tarot/contest/{id}/join", status_code=status.HTTP_200_OK)
+async def join_contest(
+        response: Response,
+        id: str,
+        authorization: str = Header(),
+):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    gimsis_session = sessions[authorization]
+
+    async with async_session() as session:
+        contest = (await session.execute(select(TarotContest).filter(TarotContest.id == id))).first()
+        contest = contest[0]
+        contestants = json.loads(contest.contestants)
         if contest.is_private:
-            if gimsis_session.username not in contestants:
-                response.status_code = status.HTTP_403_FORBIDDEN
-                return
-            if person not in contestants:
-                contestants.append(person.person)
-            contest.contestants = json.dumps(contestants)
-            await session.commit()
-        else:
-            if gimsis_session.username in contestants:
-                response.status_code = status.HTTP_409_CONFLICT
-                return
+            response.status_code = status.HTTP_409_CONFLICT
+            return
+        if gimsis_session.username not in contestants:
             contestants.append(gimsis_session.username)
-            contest.contestants = json.dumps(contestants)
-            await session.commit()
+        contest.contestants = json.dumps(contestants)
+        await session.commit()
 
 
 @tarot.patch("/tarot/contest/{id}/private_public", status_code=status.HTTP_200_OK)
