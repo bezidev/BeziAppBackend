@@ -240,6 +240,28 @@ async def add_person(
             await session.commit()
 
 
+@tarot.patch("/tarot/contest/{id}/private_public", status_code=status.HTTP_200_OK)
+async def make_contest_private_or_public(
+        response: Response,
+        id: str,
+        authorization: str = Header(),
+):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    gimsis_session = sessions[authorization]
+
+    async with async_session() as session:
+        contest = (await session.execute(select(TarotContest).filter(TarotContest.id == id))).first()
+        contest = contest[0]
+        contestants = json.loads(contest.contestants)
+        if gimsis_session.username not in contestants:
+            response.status_code = status.HTTP_403_FORBIDDEN
+            return
+        contest.is_private = not contest.is_private
+        await session.commit()
+
+
 @tarot.delete("/tarot/contest/{id}/remove", status_code=status.HTTP_200_OK)
 async def remove_person(
         response: Response,
@@ -480,4 +502,5 @@ async def contest(
             games_json.append({"id": game.id, "type": game.gamemode, "contestants": contestants_json})
         print(statistics)
         return {"games": games_json, "name": contest.name, "description": contest.description, "id": contest.id,
-                "status": all_contestants, "contestants": contest.contestants, "statistics": statistics}
+                "status": all_contestants, "contestants": contest.contestants, "statistics": statistics,
+                "is_private": contest.is_private}
