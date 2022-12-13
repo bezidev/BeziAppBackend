@@ -149,13 +149,15 @@ async def my_contests(
     async with async_session() as session:
         contests = (await session.execute(select(TarotContest))).all()
         contests_user = []
+        contests_public = []
         for contest in contests:
             contest = contest[0]
             contestants = json.loads(contest.contestants)
-            if gimsis_session.username not in contestants:
-                continue
-            contests_user.append(contest)
-        return contests_user
+            if gimsis_session.username in contestants:
+                contests_user.append(contest)
+            elif not contest.is_private:
+                contests_public.append(contest)
+        return {"my_contests": contests_user, "public_contests": contests_public}
 
 
 @tarot.delete("/tarot/game/{id}", status_code=status.HTTP_200_OK)
@@ -221,13 +223,21 @@ async def add_person(
         contest = (await session.execute(select(TarotContest).filter(TarotContest.id == id))).first()
         contest = contest[0]
         contestants = json.loads(contest.contestants)
-        if gimsis_session.username not in contestants:
-            response.status_code = status.HTTP_403_FORBIDDEN
-            return
-        if person not in contestants:
-            contestants.append(person.person)
-        contest.contestants = json.dumps(contestants)
-        await session.commit()
+        if contest.is_private:
+            if gimsis_session.username not in contestants:
+                response.status_code = status.HTTP_403_FORBIDDEN
+                return
+            if person not in contestants:
+                contestants.append(person.person)
+            contest.contestants = json.dumps(contestants)
+            await session.commit()
+        else:
+            if gimsis_session.username in contestants:
+                response.status_code = status.HTTP_409_CONFLICT
+                return
+            contestants.append(gimsis_session.username)
+            contest.contestants = json.dumps(contestants)
+            await session.commit()
 
 
 @tarot.delete("/tarot/contest/{id}/remove", status_code=status.HTTP_200_OK)
@@ -283,7 +293,7 @@ async def contest(
 
         all_contestants = {}
 
-        games = (await session.execute(select(TarotGame).filter_by(contest_id=id))).all()
+        games = (await session.execute(select(TarotGame).filter_by(contest_id=id).order_by(TarotGame.played_at.asc()))).all()
 
         for contestant in contestants:
             all_contestants[contestant] = {"name": contestant, "total": 0, "radlci_status": 0}
