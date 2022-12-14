@@ -437,14 +437,14 @@ async def contest(
                         if game.pagat_zbral != "":
                             if game.pagat_zbral == "igralci":
                                 if game.pagat_napovedal == "igralci":
-                                    difference += 20
+                                    difference += 50
                                 else:
-                                    difference += 10
+                                    difference += 25
                             else:
                                 if game.pagat_napovedal != "":
-                                    difference -= 20
+                                    difference -= 50
                                 else:
-                                    difference -= 10
+                                    difference -= 25
 
                         if game.kralj_zbral != "":
                             if game.kralj_zbral == "igralci":
