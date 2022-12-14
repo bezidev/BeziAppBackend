@@ -335,6 +335,15 @@ async def contest(
 
         for contestant in contestants:
             all_contestants[contestant] = {"name": contestant, "total": 0, "radlci_status": 0}
+            if statistics.get(contestant) is None:
+                statistics[contestant] = {
+                    "iger_odigranih": 0,
+                    "iger_igral": 0,
+                    "iger_zmagal": 0,
+                    "tock_skupaj": 0,
+                    "tipi_iger": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    "points_overtime": [0],
+                }
 
         cs2 = contestants
 
@@ -346,15 +355,6 @@ async def contest(
 
             #omg this code is bloat & unreadable
             for contestant in cs2:
-                if statistics.get(contestant) is None:
-                    statistics[contestant] = {
-                        "iger_odigranih": 0,
-                        "iger_igral": 0,
-                        "iger_zmagal": 0,
-                        "tock_skupaj": 0,
-                        "tipi_iger": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        "points_overtime": [0],
-                    }
                 ok = False
                 for cs in contestants:
                     if cs[0].name == contestant:
