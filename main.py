@@ -91,7 +91,7 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                         hours = range(int(h[0]), int(h[1]) + 1)
                     else:
                         hours = [int(csv_values[0])]
-                    print(hours)
+                    #print(hours)
                     for n in classes[i].keys():
                         try:
                             sharepoint_gimsis_name = re.findall(r'\((.*?)\)', classes[i][n].ime)[0]

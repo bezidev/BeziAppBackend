@@ -41,7 +41,7 @@ async def new_game(
         game: TarotGameAPI,
         authorization: str = Header(),
 ):
-    print(game.contestants)
+    #print(game.contestants)
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
@@ -315,7 +315,7 @@ async def contest(
 
     async with async_session() as session:
         contest = (await session.execute(select(TarotContest).filter_by(id=id))).first()
-        print(contest, id)
+        #print(contest, id)
         if contest is None or contest[0] is None:
             response.status_code = status.HTTP_404_NOT_FOUND
             return
@@ -362,7 +362,7 @@ async def contest(
                         break
                 if ok:
                     continue
-                print(contestant)
+                #print(contestant)
                 statistics[contestant]["points_overtime"].append(statistics[contestant]["points_overtime"][-1])
 
             for contestant in contestants:
@@ -516,7 +516,7 @@ async def contest(
                 all_contestants[contestant.name]["radlci_status"] = radlci[contestant.name]
                 all_contestants[contestant.name]["total"] += difference
             games_json.append({"id": game.id, "type": game.gamemode, "contestants": contestants_json})
-        print(statistics)
+        #print(statistics)
         return {"games": games_json, "name": contest.name, "description": contest.description, "id": contest.id,
                 "status": all_contestants, "contestants": contest.contestants, "statistics": statistics,
                 "is_private": contest.is_private}
