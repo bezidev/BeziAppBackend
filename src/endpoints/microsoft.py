@@ -48,10 +48,10 @@ async def background_sharepoint_job(run_only_once: bool = False):
 
     while True:
         try:
-            if not os.path.exists("../../refresh_token.txt"):
-                await (await aiofiles.open("../../refresh_token.txt", "w+")).close()
+            if not os.path.exists("refresh_token.txt"):
+                await (await aiofiles.open("refresh_token.txt", "w+")).close()
             token = ""
-            async with aiofiles.open("../../refresh_token.txt", "r+") as f:
+            async with aiofiles.open("refresh_token.txt", "r+") as f:
                 token = await f.read()
             if token == "":
                 print("[SHAREPOINT] No Microsoft refresh tokens were detected. Please sign into BežiApp Nadomeščanja to "
@@ -72,7 +72,7 @@ async def background_sharepoint_job(run_only_once: bool = False):
                                               data=body)).json()
                 access_token = response["access_token"]
                 refresh_token = response["refresh_token"]
-                async with aiofiles.open("../../refresh_token.txt", "w+") as f:
+                async with aiofiles.open("refresh_token.txt", "w+") as f:
                     await f.write(refresh_token)
 
                 await get_sharepoint_files(access_token)
@@ -103,7 +103,7 @@ async def ms_oauth_callback(code: str):
     async with httpx.AsyncClient() as client:
         response = (await client.post("https://login.microsoftonline.com/organizations/oauth2/v2.0/token", data=body)).json()
         refresh_token = response["refresh_token"]
-        async with aiofiles.open("../../refresh_token.txt", "w+") as f:
+        async with aiofiles.open("refresh_token.txt", "w+") as f:
             await f.write(refresh_token)
         await background_sharepoint_job(run_only_once=True)
 
