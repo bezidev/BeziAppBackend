@@ -24,8 +24,8 @@ class TarotGameAPI(BaseModel):
     kralj_napovedal: str
     valat_zbral: str
     valat_napovedal: str
-    barvni_valat_zbral: str
-    barvni_valat_napovedal: str
+    #barvni_valat_zbral: str
+    #barvni_valat_napovedal: str
     contestants: str
     izgubil_monda: str
 
@@ -88,8 +88,8 @@ async def new_game(
             kralj_napovedal=game.kralj_napovedal,
             valat_zbral=game.valat_zbral,
             valat_napovedal=game.valat_napovedal,
-            barvni_valat_zbral=game.barvni_valat_zbral,
-            barvni_valat_napovedal=game.barvni_valat_napovedal,
+            barvni_valat_zbral="",
+            barvni_valat_napovedal="",
             izgubil_monda=game.izgubil_monda,
             v_tri=v_tri,
             initializer=gimsis_session.username,
@@ -377,15 +377,23 @@ async def contest(
                 if radlci.get(contestant.name) is None:
                     radlci[contestant.name] = 0
 
+                picked_up_nothing = False
+
                 if game.gamemode == 12:
                     for con in contestants:
                         # Če nekdo pobere vsaj polovico točk, je avtomatično dobil -70, medtem ko vsi ostali 0
                         if abs(con[0].difference) >= 35:
                             if contestant.name != con[0].name:
-                                difference = 0
+                                if difference == 0:
+                                    # igralec dobi +70 ker je bil tako priden da ni absolutno nič pobral
+                                    picked_up_nothing = True
+                                    difference = 70
+                                else:
+                                    difference = 0
                             else:
                                 difference = -70
-                    difference = -abs(difference)
+                        if not picked_up_nothing:
+                            difference = -abs(difference)
 
                 # pri klopu se ne igra
                 if contestant.playing or game.gamemode == 12:
@@ -393,104 +401,110 @@ async def contest(
                     statistics[contestant.name]["tipi_iger"][game.gamemode] += 1
 
                 if contestant.playing:
-                    # haha renons
-                    if game.gamemode != 13:
-                        # bog ne daj, da dobiš minusa
-                        if game.gamemode == 3 or game.gamemode == 7 or 9 <= game.gamemode <= 11:
-                            # pri beračih + pikolu in valatih se ne šteje kok si pobral
-                            # temveč samo če si uspešno dokončal gamemode
-                            if difference <= 0:
-                                difference = -GAMEMODES[game.gamemode]
+                    # klopa se ne igra
+                    if game.gamemode != 12:
+                        # haha renons
+                        if game.gamemode != 13:
+                            # bog ne daj, da dobiš minusa
+                            if game.gamemode == 3 or 7 <= game.gamemode <= 11:
+                                # pri beračih + pikolu, solo brez in valatih se ne šteje kok si pobral
+                                # temveč samo če si uspešno dokončal gamemode
+                                if difference <= 0:
+                                    difference = -GAMEMODES[game.gamemode]
+                                else:
+                                    difference = GAMEMODES[game.gamemode]
                             else:
-                                difference = GAMEMODES[game.gamemode]
+                                if difference <= 0:
+                                    difference -= GAMEMODES[game.gamemode]
+                                else:
+                                    difference += GAMEMODES[game.gamemode]
+
+                                # omg don't bully me for this logic
+                                if game.trulo_zbral != "":
+                                    if game.trulo_zbral == "igralci":
+                                        if game.trulo_napovedal == "igralci":
+                                            difference += 20
+                                        else:
+                                            difference += 10
+                                    else:
+                                        if game.trulo_napovedal != "":
+                                            difference -= 20
+                                        else:
+                                            difference -= 10
+
+                                if game.kralji_zbral != "":
+                                    if game.kralji_zbral == "igralci":
+                                        if game.kralji_napovedal == "igralci":
+                                            difference += 20
+                                        else:
+                                            difference += 10
+                                    else:
+                                        if game.kralji_napovedal != "":
+                                            difference -= 20
+                                        else:
+                                            difference -= 10
+
+                                if game.pagat_zbral != "":
+                                    if game.pagat_zbral == "igralci":
+                                        if game.pagat_napovedal == "igralci":
+                                            difference += 50
+                                        else:
+                                            difference += 25
+                                    else:
+                                        if game.pagat_napovedal != "":
+                                            difference -= 50
+                                        else:
+                                            difference -= 25
+
+                                if game.kralj_zbral != "":
+                                    if game.kralj_zbral == "igralci":
+                                        if game.kralj_napovedal == "igralci":
+                                            difference += 20
+                                        else:
+                                            difference += 10
+                                    else:
+                                        if game.kralj_napovedal != "":
+                                            difference -= 20
+                                        else:
+                                            difference -= 10
+
+                                # no, valat in barvni valat nista +=, temveč sta =, saj pol ne bi nihče igral gamemodov razen v primeru odprtega berača
+                                if game.valat_zbral != "":
+                                    if game.valat_zbral == "igralci":
+                                        if game.valat_napovedal == "igralci":
+                                            difference = 500
+                                        else:
+                                            difference = 250
+                                    else:
+                                        if game.valat_napovedal != "":
+                                            difference = -500
+                                        else:
+                                            difference = -250
+
+                                """
+                                torej, po uradnih tarok pravilih, barvni valat ni napoved, temveč samo in izključno IGRA.
+                                
+                                if game.barvni_valat_zbral != "":
+                                    if game.barvni_valat_zbral == "igralci":
+                                        if game.barvni_valat_napovedal == "igralci":
+                                            difference = 250
+                                        else:
+                                            difference = 125
+                                    else:
+                                        if game.barvni_valat_napovedal != "":
+                                            difference = -250
+                                        else:
+                                            difference = -125
+                                """
                         else:
-                            if difference <= 0:
-                                difference -= GAMEMODES[game.gamemode]
-                            else:
-                                difference += GAMEMODES[game.gamemode]
-
-                        # omg don't bully me for this logic
-                        if game.trulo_zbral != "":
-                            if game.trulo_zbral == "igralci":
-                                if game.trulo_napovedal == "igralci":
-                                    difference += 20
-                                else:
-                                    difference += 10
-                            else:
-                                if game.trulo_napovedal != "":
-                                    difference -= 20
-                                else:
-                                    difference -= 10
-
-                        if game.kralji_zbral != "":
-                            if game.kralji_zbral == "igralci":
-                                if game.kralji_napovedal == "igralci":
-                                    difference += 20
-                                else:
-                                    difference += 10
-                            else:
-                                if game.kralji_napovedal != "":
-                                    difference -= 20
-                                else:
-                                    difference -= 10
-
-                        if game.pagat_zbral != "":
-                            if game.pagat_zbral == "igralci":
-                                if game.pagat_napovedal == "igralci":
-                                    difference += 50
-                                else:
-                                    difference += 25
-                            else:
-                                if game.pagat_napovedal != "":
-                                    difference -= 50
-                                else:
-                                    difference -= 25
-
-                        if game.kralj_zbral != "":
-                            if game.kralj_zbral == "igralci":
-                                if game.kralj_napovedal == "igralci":
-                                    difference += 20
-                                else:
-                                    difference += 10
-                            else:
-                                if game.kralj_napovedal != "":
-                                    difference -= 20
-                                else:
-                                    difference -= 10
-
-                        # no, valat in barvni valat nista +=, temveč sta =, saj pol ne bi nihče igral gamemodov razen v primeru odprtega berača
-                        if game.valat_zbral != "":
-                            if game.valat_zbral == "igralci":
-                                if game.valat_napovedal == "igralci":
-                                    difference = 500
-                                else:
-                                    difference = 250
-                            else:
-                                if game.valat_napovedal != "":
-                                    difference = -500
-                                else:
-                                    difference = -250
-
-                        if game.barvni_valat_zbral != "":
-                            if game.barvni_valat_zbral == "igralci":
-                                if game.barvni_valat_napovedal == "igralci":
-                                    difference = 250
-                                else:
-                                    difference = 125
-                            else:
-                                if game.barvni_valat_napovedal != "":
-                                    difference = -250
-                                else:
-                                    difference = -125
-                    else:
-                        difference = -70
+                            difference = -70
 
                 # lol let's boost the difference (radlci go brrrrrrrrrrrrrrrrrrrrrrr)
                 if radlci[contestant.name] > 0 and difference != 0 and game.gamemode != 13:
                     difference *= 2
                     if difference > 0:
                         radlci[contestant.name] -= 1
-                        contestants_json[contestant.name]["radlc_uporabljen"] = True
+                    contestants_json[contestant.name]["radlc_uporabljen"] = True
 
                 # izguba monda
                 if contestant.name == game.izgubil_monda:
@@ -510,12 +524,16 @@ async def contest(
                 statistics[contestant.name]["points_overtime"].append(statistics[contestant.name]["points_overtime"][-1] + difference)
 
                 if all_contestants.get(contestant.name) is None:
-                    all_contestants[contestant.name] = {"name": contestant.name, "total": 0,
+                    all_contestants[contestant.name] = {"name": contestant.name, "total": 0, "total_radlci": 0,
                                                         "radlci_status": radlci[contestant.name]}
 
                 all_contestants[contestant.name]["radlci_status"] = radlci[contestant.name]
                 all_contestants[contestant.name]["total"] += difference
             games_json.append({"id": game.id, "type": game.gamemode, "contestants": contestants_json})
+
+        for i in all_contestants.keys():
+            all_contestants[i]["total_radlci"] = all_contestants[i]["total"] + all_contestants[i]["radlci_status"] * -40
+
         #print(statistics)
         return {"games": games_json, "name": contest.name, "description": contest.description, "id": contest.id,
                 "status": all_contestants, "contestants": contest.contestants, "statistics": statistics,
