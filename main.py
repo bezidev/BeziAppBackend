@@ -48,7 +48,11 @@ async def get_timetable(response: Response, date: str | None, authorization: str
         await gimsis_session.login()
         classes, days = await gimsis_session.fetch_timetable(date)
 
-    gradings = await gimsis_session.fetch_gradings()
+    try:
+        gradings = await gimsis_session.fetch_gradings()
+    except Exception as e:
+        print(f"[ERROR] Error while fetching gradings: {e}")
+        gradings = []
 
     classes_archive = copy.deepcopy(classes)
 
