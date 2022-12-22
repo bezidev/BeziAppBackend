@@ -365,9 +365,17 @@ async def contest(
                 #print(contestant)
                 statistics[contestant]["points_overtime"].append(statistics[contestant]["points_overtime"][-1])
 
+            warning = False
+
             for contestant in contestants:
                 contestant = contestant[0]
                 difference = contestant.difference
+
+                if contestant.name not in cs2:
+                    # Welp, it has happened
+                    # Somebody has deleted a person.
+                    warning = True
+                    continue
 
                 statistics[contestant.name]["iger_odigranih"] += 1
 
@@ -529,7 +537,7 @@ async def contest(
 
                 all_contestants[contestant.name]["radlci_status"] = radlci[contestant.name]
                 all_contestants[contestant.name]["total"] += difference
-            games_json.append({"id": game.id, "type": game.gamemode, "contestants": contestants_json})
+            games_json.append({"id": game.id, "type": game.gamemode, "contestants": contestants_json, "warning": warning})
 
         for i in all_contestants.keys():
             all_contestants[i]["total_radlci"] = all_contestants[i]["total"] + all_contestants[i]["radlci_status"] * -40
