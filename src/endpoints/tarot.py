@@ -14,16 +14,22 @@ tarot = APIRouter()
 
 class TarotGameAPI(BaseModel):
     gamemode: int
+    igra_kontre: int
     trula_zbral: str
     trula_napovedal: str
+    trula_kontre: int
     kralji_zbral: str
     kralji_napovedal: str
+    kralji_kontre: int
     pagat_zbral: str
     pagat_napovedal: str
+    pagat_kontre: int
     kralj_zbral: str
     kralj_napovedal: str
+    kralj_kontre: int
     valat_zbral: str
     valat_napovedal: str
+    valat_kontre: int
     #barvni_valat_zbral: str
     #barvni_valat_napovedal: str
     contestants: str
@@ -74,20 +80,51 @@ async def new_game(
                                             difference=int(contestant["difference"]), playing=contestant["playing"])
             session.add(contestant_db)
 
+        # verifikacija konter
+        if 0 > game.igra_kontre or game.igra_kontre > 4:
+            response.status_code = status.HTTP_406_NOT_ACCEPTABLE
+            return "Kontra ni veljavna"
+
+        if 0 > game.trula_kontre or game.trula_kontre > 4:
+            response.status_code = status.HTTP_406_NOT_ACCEPTABLE
+            return "Kontra ni veljavna"
+
+        if 0 > game.kralji_kontre or game.kralji_kontre > 4:
+            response.status_code = status.HTTP_406_NOT_ACCEPTABLE
+            return "Kontra ni veljavna"
+
+        if 0 > game.pagat_kontre or game.pagat_kontre > 4:
+            response.status_code = status.HTTP_406_NOT_ACCEPTABLE
+            return "Kontra ni veljavna"
+
+        if 0 > game.kralj_kontre or game.kralj_kontre > 4:
+            response.status_code = status.HTTP_406_NOT_ACCEPTABLE
+            return "Kontra ni veljavna"
+
+        if 0 > game.valat_kontre or game.valat_kontre > 4:
+            response.status_code = status.HTTP_406_NOT_ACCEPTABLE
+            return "Kontra ni veljavna"
+
         g = TarotGame(
             id=game_id,
             contest_id=id,
             gamemode=game.gamemode,
+            igra_kontre=game.igra_kontre,
             trulo_zbral=game.trula_zbral,
             trulo_napovedal=game.trula_napovedal,
+            trula_kontre=game.trula_kontre,
             kralji_zbral=game.kralji_zbral,
             kralji_napovedal=game.kralji_napovedal,
+            kralji_kontre=game.kralji_kontre,
             pagat_zbral=game.pagat_zbral,
             pagat_napovedal=game.pagat_napovedal,
+            pagat_kontre=game.pagat_kontre,
             kralj_zbral=game.kralj_zbral,
             kralj_napovedal=game.kralj_napovedal,
+            kralj_kontre=game.kralj_kontre,
             valat_zbral=game.valat_zbral,
             valat_napovedal=game.valat_napovedal,
+            valat_kontre=game.valat_kontre,
             barvni_valat_zbral="",
             barvni_valat_napovedal="",
             izgubil_monda=game.izgubil_monda,
@@ -365,8 +402,11 @@ async def contest(
                 # print(contestant)
                 statistics[contestant]["points_overtime"].append(statistics[contestant]["points_overtime"][-1])
 
+            explanation: dict[str, list] = {}
+
             warning = False
 
+            # ma dej nehi na klopa se ne štejejo kontre
             if game.gamemode == 12:
                 picked_up_more = False
                 for con in contestants:
@@ -376,25 +416,34 @@ async def contest(
                         break
                 for i, con in enumerate(contestants):
                     con = con[0]
+                    explanation[con.name] = []
 
                     # Če nekdo pobere vsaj polovico točk, je avtomatično dobil -70, medtem ko vsi ostali 0
                     # prav tako, če dve osebi pobereta 35, ostali pa 0, se morata obe osebi ki sta pobrali šteti kot -70.
                     if not picked_up_more:
                         if con.difference == 0:
+                            explanation[con.name].append({"title": "Igra (pobral nič)", "diff": 70, "kontra": 1})
                             contestants[i][0].difference = 70
                         else:
+                            explanation[con.name].append({"title": "Razlika", "diff": -abs(con.difference), "kontra": 1})
                             contestants[i][0].difference = -abs(con.difference)
                     else:
                         if abs(con.difference) >= 35:
+                            explanation[con.name].append({"title": f"Igra (pobral {abs(con.difference)})", "diff": -70, "kontra": 1})
                             contestants[i][0].difference = -70
                         elif con.difference == 0:
+                            explanation[con.name].append({"title": "Igra (pobral nič)", "diff": 70, "kontra": 1})
                             contestants[i][0].difference = 70
                         else:
+                            explanation[con.name].append({"title": f"Igra (nekdo pobral več kot 34, pobral {abs(con.difference)})", "diff": 0, "kontra": 1})
                             contestants[i][0].difference = 0
 
             for contestant in contestants:
                 contestant = contestant[0]
                 difference = contestant.difference
+
+                if explanation.get(contestant.name) is None:
+                    explanation[contestant.name] = []
 
                 if contestant.name not in cs2:
                     # Welp, it has happened
@@ -404,7 +453,7 @@ async def contest(
 
                 statistics[contestant.name]["iger_odigranih"] += 1
 
-                contestants_json[contestant.name] = {"radlc_uporabljen": False, "radlci_status": 0, "razlika": 0}
+                contestants_json[contestant.name] = {"radlc_uporabljen": False, "radlci_status": 0, "razlika": 0, "igra": contestant.playing}
 
                 # jah, se zgodi
                 if radlci.get(contestant.name) is None:
@@ -416,84 +465,143 @@ async def contest(
                     statistics[contestant.name]["tipi_iger"][game.gamemode] += 1
 
                 if contestant.playing:
+                    kontra = 2 ** game.igra_kontre
+
                     # bog ne daj, da dobiš minusa
                     if game.gamemode == 3 or 7 <= game.gamemode <= 11 or game.gamemode == 13:
                         if game.gamemode == 13:
+                            # na renons NI KONTRE
                             difference = -70
+                            explanation[contestant.name].append({"title": "Igra", "diff": difference, "kontra": kontra})
                         else:
                             # pri beračih + pikolu, solo brez in valatih se ne šteje kok si pobral
                             # temveč samo če si uspešno dokončal gamemode
                             if difference <= 0:
-                                difference = -GAMEMODES[game.gamemode]
+                                difference = -GAMEMODES[game.gamemode] * kontra
                             else:
-                                difference = GAMEMODES[game.gamemode]
+                                difference = GAMEMODES[game.gamemode] * kontra
+                            explanation[contestant.name].append({"title": "Igra", "diff": difference, "kontra": kontra})
                     else:
+                        gamemode = GAMEMODES[game.gamemode]
                         if difference <= 0:
-                            difference -= GAMEMODES[game.gamemode]
-                        else:
-                            difference += GAMEMODES[game.gamemode]
+                            gamemode = -gamemode
+                        difference *= kontra
+                        gamemode *= kontra
+                        explanation[contestant.name].append({"title": "Igra", "diff": gamemode, "kontra": kontra})
+                        explanation[contestant.name].append({"title": "Razlika", "diff": difference, "kontra": kontra})
+                        difference += gamemode
 
                         # omg don't bully me for this logic
                         if game.trulo_zbral != "":
+                            # Tukaj naredimo nepredstavljivo – potenco števila 2. V primeru, da ni kontre je dan
+                            # argument tako ali tako nič, kar essentially pomeni, da je to dva na nič, kar je ena [
+                            # citation needed], kar naj na tem svetu ne bi spremenilo rezultata pri množenju. Zdaj,
+                            # lahko bi to šel dokazovat (a je namenilnik prav? Ne vem ne sprašuj o moji slovenščini),
+                            # da je to res, če bi želel zabijati čas, kakor smo to delali v prvem letniku pri
+                            # matematiki, ampak se mi iskreno ne da in bom zato to prepustil bralcu oz. zdravi kmečki
+                            # pameti. Hvala za razumevanje.
+                            kontra = 2**game.trula_kontre
                             if game.trulo_zbral == "igralci":
                                 if game.trulo_napovedal == "igralci":
-                                    difference += 20
+                                    diff = 20 * kontra
+                                    explanation[contestant.name].append({"title": "Napovedana trula", "diff": diff, "kontra": kontra})
+                                    difference += diff
                                 else:
-                                    difference += 10
+                                    diff = 10 * kontra
+                                    explanation[contestant.name].append({"title": "Nenapovedana trula", "diff": diff, "kontra": kontra})
+                                    difference += diff
                             else:
                                 if game.trulo_napovedal != "":
-                                    difference -= 20
+                                    diff = -20 * kontra
+                                    explanation[contestant.name].append({"title": "Napovedana trula", "diff": diff, "kontra": kontra})
+                                    difference += diff
                                 else:
-                                    difference -= 10
+                                    diff = -10 * kontra
+                                    explanation[contestant.name].append({"title": "Nenapovedana trula", "diff": diff, "kontra": kontra})
+                                    difference += diff
 
                         if game.kralji_zbral != "":
+                            kontra = 2 ** game.kralji_kontre
                             if game.kralji_zbral == "igralci":
                                 if game.kralji_napovedal == "igralci":
-                                    difference += 20
+                                    diff = 20 * kontra
+                                    explanation[contestant.name].append({"title": "Napovedani kralji", "diff": diff, "kontra": kontra})
+                                    difference += diff
                                 else:
-                                    difference += 10
+                                    diff = 10 * kontra
+                                    explanation[contestant.name].append({"title": "Nenapovedani kralji", "diff": diff, "kontra": kontra})
+                                    difference += diff
                             else:
                                 if game.kralji_napovedal != "":
-                                    difference -= 20
+                                    diff = -20 * kontra
+                                    explanation[contestant.name].append({"title": "Napovedani kralji", "diff": diff, "kontra": kontra})
+                                    difference += diff
                                 else:
-                                    difference -= 10
+                                    diff = -10 * kontra
+                                    explanation[contestant.name].append({"title": "Nenapovedani kralji", "diff": diff, "kontra": kontra})
+                                    difference += diff
 
                         if game.pagat_zbral != "":
+                            kontra = 2 ** game.pagat_kontre
                             if game.pagat_zbral == "igralci":
                                 if game.pagat_napovedal == "igralci":
-                                    difference += 50
+                                    diff = 50 * kontra
+                                    explanation[contestant.name].append({"title": "Napovedan pagat ultimo", "diff": diff, "kontra": kontra})
+                                    difference += diff
                                 else:
-                                    difference += 25
+                                    diff = 25 * kontra
+                                    explanation[contestant.name].append({"title": "Nenapovedan pagat ultimo", "diff": diff, "kontra": kontra})
+                                    difference += diff
                             else:
                                 if game.pagat_napovedal != "":
-                                    difference -= 50
+                                    diff = -50 * kontra
+                                    explanation[contestant.name].append({"title": "Napovedan pagat ultimo", "diff": diff, "kontra": kontra})
+                                    difference += diff
                                 else:
-                                    difference -= 25
+                                    diff = -25 * kontra
+                                    explanation[contestant.name].append({"title": "Nenapovedan pagat ultimo", "diff": diff, "kontra": kontra})
+                                    difference += diff
 
                         if game.kralj_zbral != "":
+                            kontra = 2 ** game.kralj_kontre
                             if game.kralj_zbral == "igralci":
                                 if game.kralj_napovedal == "igralci":
-                                    difference += 20
+                                    diff = 20 * kontra
+                                    explanation[contestant.name].append({"title": "Napovedan kralj ultimo", "diff": diff, "kontra": kontra})
+                                    difference += diff
                                 else:
-                                    difference += 10
+                                    diff = 10 * kontra
+                                    explanation[contestant.name].append({"title": "Nenapovedan kralj ultimo", "diff": diff, "kontra": kontra})
+                                    difference += diff
                             else:
                                 if game.kralj_napovedal != "":
-                                    difference -= 20
+                                    diff = -20 * kontra
+                                    explanation[contestant.name].append({"title": "Napovedan kralj ultimo", "diff": diff, "kontra": kontra})
+                                    difference += diff
                                 else:
-                                    difference -= 10
+                                    diff = -10 * kontra
+                                    explanation[contestant.name].append({"title": "Nenapovedan kralj ultimo", "diff": diff, "kontra": kontra})
+                                    difference += diff
 
                         # no, valat in barvni valat nista +=, temveč sta =, saj pol ne bi nihče igral gamemodov razen v primeru odprtega berača
                         if game.valat_zbral != "":
+                            kontra = 2 ** game.valat_kontre
+                            explanation[contestant.name] = []
                             if game.valat_zbral == "igralci":
                                 if game.valat_napovedal == "igralci":
-                                    difference = 500
+                                    diff = 500 * kontra
+                                    difference = diff
                                 else:
-                                    difference = 250
+                                    diff = 250 * kontra
+                                    difference = diff
                             else:
                                 if game.valat_napovedal != "":
-                                    difference = -500
+                                    diff = -500 * kontra
+                                    difference = diff
                                 else:
-                                    difference = -250
+                                    diff = -250 * kontra
+                                    difference = diff
+                            explanation[contestant.name].append({"title": "Igra", "diff": difference, "kontra": kontra})
 
                         """
                         torej, po uradnih tarok pravilih, barvni valat ni napoved, temveč samo in izključno IGRA.
@@ -511,6 +619,8 @@ async def contest(
                                     difference = -125
                         """
 
+                    has_inputed = True
+
                 # lol let's boost the difference (radlci go brrrrrrrrrrrrrrrrrrrrrrr)
                 if radlci[contestant.name] > 0 and difference != 0 and game.gamemode != 13:
                     difference *= 2
@@ -520,6 +630,7 @@ async def contest(
 
                 # izguba monda
                 if contestant.name == game.izgubil_monda:
+                    explanation[contestant.name].append({"title": "Izguba monda", "diff": -21, "kontra": 1})
                     difference -= 21
 
                 # dejmo radlce vsem tem bogim ljudem
@@ -541,7 +652,7 @@ async def contest(
 
                 all_contestants[contestant.name]["radlci_status"] = radlci[contestant.name]
                 all_contestants[contestant.name]["total"] += difference
-            games_json.append({"id": game.id, "type": game.gamemode, "contestants": contestants_json, "warning": warning})
+            games_json.append({"id": game.id, "type": game.gamemode, "contestants": contestants_json, "warning": warning, "explanation": explanation})
 
         for i in all_contestants.keys():
             all_contestants[i]["total_radlci"] = all_contestants[i]["total"] + all_contestants[i]["radlci_status"] * -40

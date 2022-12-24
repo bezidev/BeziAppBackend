@@ -1,0 +1,6 @@
+ALTER TABLE tarot_game ADD COLUMN igra_kontre INTEGER DEFAULT 0;
+ALTER TABLE tarot_game ADD COLUMN trula_kontre INTEGER DEFAULT 0;
+ALTER TABLE tarot_game ADD COLUMN kralji_kontre INTEGER DEFAULT 0;
+ALTER TABLE tarot_game ADD COLUMN pagat_kontre INTEGER DEFAULT 0;
+ALTER TABLE tarot_game ADD COLUMN kralj_kontre INTEGER DEFAULT 0;
+ALTER TABLE tarot_game ADD COLUMN valat_kontre INTEGER DEFAULT 0;
