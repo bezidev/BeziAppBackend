@@ -74,20 +74,22 @@ class TarotGamePlayer(Base):
     playing = Column(Boolean)
 
 
-# 0: Tri            10
-# 1: Dva            20
-# 2: Ena            30
-# 3: Pikolo         35 [Žiga me je zbullyjal, da pikolo ne obstaja, zato do nadaljnjega ni podprt]
-# 4: Solo tri       40
-# 5: Solo dva       50
-# 6: Solo ena       60
-# 7: Berač          70
-# 8: Solo brez      80
-# 9: Odprti berač   90
-# 10: Valat         500
-# 11: Barvni valat  125
-# 12: Klop          [posebna igra]
-# 13: Renons        -70
+# 0: Tri                      10
+# 1: Dva                      20
+# 2: Ena                      30
+# 3: Pikolo                   35 [Žiga me je zbullyjal, da pikolo ne obstaja, zato do nadaljnjega ni podprt]
+# 4: Solo tri                 40
+# 5: Solo dva                 50
+# 6: Solo ena                 60
+# 7: Berač                    70
+# 8: Solo brez                80
+# 9: Odprti berač             90
+# 10: Valat                   500
+# 11: Barvni valat            125
+# 12: Klop                    [posebna igra]
+# 13: Renons                  -70
+# 14: Ročni vpis              0
+# 15: Ročni vpis z radlcem    0
 GAMEMODES = {
     0: 10,
     1: 20,
@@ -103,6 +105,8 @@ GAMEMODES = {
     11: 125,
     12: 0,
     13: -70,
+    14: 0,
+    15: 0,
 }
 
 

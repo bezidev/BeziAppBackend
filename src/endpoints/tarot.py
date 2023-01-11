@@ -378,7 +378,7 @@ async def contest(
                     "iger_igral": 0,
                     "iger_zmagal": 0,
                     "tock_skupaj": 0,
-                    "tipi_iger": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    "tipi_iger": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     "points_overtime": [0],
                 }
 
@@ -634,7 +634,7 @@ async def contest(
                     difference -= 21
 
                 # dejmo radlce vsem tem bogim ljudem
-                if 7 <= game.gamemode <= 12:
+                if 7 <= game.gamemode <= 12 or game.gamemode == 15:
                     radlci[contestant.name] += 1
 
                 contestants_json[contestant.name]["radlci_status"] = radlci[contestant.name]
