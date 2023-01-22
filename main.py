@@ -65,7 +65,7 @@ async def get_timetable(response: Response, date: str | None, authorization: str
         if len(classes[0].keys()) != 0 and classes[0].get(6) is None:
             classes[0][6] = GimSisUra(6, 0, "ANG (Angleščina)", "ANG", "1.A", "Maja Petričić Štritof", "Učilnica 105", False, False)
             classes[0][6].rocno = True
-
+    
     for i, day in enumerate(days):
         for grading in gradings:
             if day not in grading.datum:
@@ -74,6 +74,8 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                 if grading.predmet.lower() in classes[i][n].kratko_ime.lower():
                     classes[i][n].ocenjevanje = True
                     classes[i][n].ocenjevanje_details = grading
+
+    for i, day in enumerate(sharepoint_days):
         for n in classes[i].keys():
             classes[i][n].opozori = None
 
