@@ -9,6 +9,7 @@ import io
 import aiofiles as aiofiles
 from fastapi import status, Header, Response, Form, FastAPI, APIRouter
 from fastapi.responses import StreamingResponse
+from gimsisapi.formtagparser import GimSisUra
 from ics import Calendar, Event
 from datetime import datetime
 
@@ -59,12 +60,18 @@ async def get_timetable(response: Response, date: str | None, authorization: str
     sharepoint_days = translate_days_into_sharepoint(days)
     all_classes = find_base_class(classes)
 
-    for i, day in enumerate(sharepoint_days):
+    if "1A" in all_classes:
+        # ročni popravki za 1.A
+        if len(classes[0].keys()) != 0 and classes[0].get(6) is None:
+            classes[0][6] = GimSisUra(6, 0, "ANG (Angleščina)", "ANG", "1.A", "Maja Petričić Štritof", "Učilnica 105", False, False)
+            classes[0][6].rocno = True
+
+    for i, day in enumerate(days):
         for grading in gradings:
             if day not in grading.datum:
                 continue
             for n in classes[i].keys():
-                if classes[i][n].kratko_ime.lower() in grading.predmet.lower():
+                if grading.predmet.lower() in classes[i][n].kratko_ime.lower():
                     classes[i][n].ocenjevanje = True
                     classes[i][n].ocenjevanje_details = grading
         for n in classes[i].keys():
