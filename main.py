@@ -65,6 +65,23 @@ async def get_timetable(response: Response, date: str | None, authorization: str
         if len(classes[0].keys()) != 0 and classes[0].get(6) is None:
             classes[0][6] = GimSisUra(6, 0, "ANG (Angleščina)", "ANG", "1.A", "Maja Petričić Štritof", "Učilnica 105", False, False)
             classes[0][6].rocno = True
+        if "22.02." in days:
+            for i in range(9):
+                classes[2][i] = GimSisUra(i, 2, "ZD (Zdravniški pregled)", "ZD", "1.A", "ZD",
+                                          "ZD Bežigrad", False, False)
+                classes[2][i].rocno = True
+        if "10.03." in days:
+            classes[4][7] = GimSisUra(7, 4, "OIV (Likovna umetnost - obisk galerije)", "OIV-LUM", "1.A", "Tanja Mastnak",
+                                      "Galerija", False, False)
+            classes[4][7].rocno = True
+        if "23.02." in days:
+            classes[3][7] = GimSisUra(7, 3, "KIZ (Knjižnično-informacijska znanja - obisk knjižnice Bežigrad)", "KIZ", "1.A", "Savina Zwitter",
+                                      "Galerija", False, False)
+            classes[3][7].rocno = True
+            classes[3][8] = GimSisUra(8, 3, "KIZ (Knjižnično-informacijska znanja - obisk knjižnice Bežigrad)", "KIZ",
+                                      "1.A", "Savina Zwitter",
+                                      "Galerija", False, False)
+            classes[3][8].rocno = True
 
     for i, day in enumerate(days):
         for grading in gradings:
