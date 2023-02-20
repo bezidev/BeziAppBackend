@@ -91,6 +91,8 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                 if grading.predmet.lower() in classes[i][n].kratko_ime.lower():
                     classes[i][n].ocenjevanje = True
                     classes[i][n].ocenjevanje_details = grading
+
+    for i, day in enumerate(sharepoint_days):
         for n in classes[i].keys():
             classes[i][n].opozori = None
 
