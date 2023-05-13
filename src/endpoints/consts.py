@@ -65,6 +65,20 @@ class Upload(Base):
     type = Column(String(30))
 
 
+class RadioSuggestion(Base):
+    __tablename__ = 'suggestion'
+    id = Column(String(60), primary_key=True)
+    youtube_id = Column(String(20))
+    username = Column(String(60))
+    name = Column(String(100))
+    description = Column(String(1000))
+    status = Column(String(100))
+    reviewed_by = Column(String(60))
+    last_status_update = Column(Integer)
+    submitted_on = Column(Integer)
+    declined_reason = Column(String(1000))
+
+
 class TarotGamePlayer(Base):
     __tablename__ = "tarot_game_player"
     id = Column(String(60), primary_key=True)

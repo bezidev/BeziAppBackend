@@ -7,7 +7,7 @@ import re
 import io
 
 import aiofiles as aiofiles
-from fastapi import status, Header, Response, Form, FastAPI, APIRouter
+from fastapi import status, Header, Response, Form, FastAPI
 from fastapi.responses import StreamingResponse
 from gimsisapi.formtagparser import GimSisUra
 from ics import Calendar, Event
@@ -277,7 +277,7 @@ async def get_grades(response: Response, authorization: str = Header()):
 async def login(username: str = Form(), password: str = Form()):
     global sessions
 
-    gimsis = GimSisAPI(username, password)
+    gimsis = GimSisAPI(username.lower(), password)
     await gimsis.login()
 
     session = base64.b64encode(os.urandom(64)).decode()
