@@ -5,7 +5,7 @@ from fastapi import Header, Form, status, APIRouter
 from sqlalchemy import delete, select
 from fastapi.responses import Response
 
-from .consts import async_session, sessions, RadioSuggestion
+from .consts import async_session, sessions, RadioSuggestion, TEST_USERNAME
 
 radio = APIRouter()
 
@@ -27,6 +27,9 @@ async def new_suggestion(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     id = str(uuid.uuid4())
     suggestion = RadioSuggestion(
         id=id,
@@ -51,6 +54,9 @@ async def get_suggestions(response: Response, authorization: str = Header()):
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     async with async_session() as session:
         suggestions = (await session.execute(select(RadioSuggestion))).all()
     suggestions_json = []
@@ -106,6 +112,9 @@ async def delete_suggestion(response: Response, id: str = Form(), authorization:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     async with async_session() as session:
         suggestion = (await session.execute(select(RadioSuggestion).filter_by(id=id))).first()
         if suggestion is None or suggestion[0] is None:

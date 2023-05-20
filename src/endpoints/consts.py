@@ -13,6 +13,9 @@ SCOPE = "https://graph.microsoft.com/Files.Read.All"
 sessions: dict[str, GimSisAPI] = {}
 lopolis_sessions: dict[str, LoPolisAPI] = {}
 
+TEST_USERNAME = "test"
+TEST_PASSWORD = "test"
+
 ALLOWED_EXTENSIONS = [
     "pdf",  # Portable Document Format
     "pptx",  # PowerPoint format

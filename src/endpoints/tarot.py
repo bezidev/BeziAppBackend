@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy import select, delete
 from fastapi.responses import Response
 
-from .consts import sessions, async_session, TarotContest, TarotGamePlayer, TarotGame, GAMEMODES
+from .consts import sessions, async_session, TarotContest, TarotGamePlayer, TarotGame, GAMEMODES, TEST_USERNAME
 
 tarot = APIRouter()
 
@@ -52,6 +52,9 @@ async def new_game(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
 
     async with async_session() as session:
         contest = (await session.execute(select(TarotContest).filter_by(id=id))).first()
@@ -151,6 +154,9 @@ async def new_contest(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
 
     async with async_session() as session:
         cs = json.loads(contestants)
@@ -207,6 +213,9 @@ async def delete_game(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
 
     async with async_session() as session:
         game = (await session.execute(select(TarotGame).filter_by(id=id))).first()
@@ -229,6 +238,9 @@ async def delete_contest(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
 
     async with async_session() as session:
         contest = (await session.execute(select(TarotContest).filter_by(id=id))).first()
@@ -255,6 +267,9 @@ async def add_person(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
 
     async with async_session() as session:
         contest = (await session.execute(select(TarotContest).filter(TarotContest.id == id))).first()
@@ -279,6 +294,9 @@ async def join_contest(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
 
     async with async_session() as session:
         contest = (await session.execute(select(TarotContest).filter(TarotContest.id == id))).first()
@@ -303,6 +321,9 @@ async def make_contest_private_or_public(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
 
     async with async_session() as session:
         contest = (await session.execute(select(TarotContest).filter(TarotContest.id == id))).first()
@@ -326,6 +347,9 @@ async def remove_person(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
 
     async with async_session() as session:
         contest = (await session.execute(select(TarotContest).filter(TarotContest.id == id))).first()
@@ -349,6 +373,9 @@ async def contest(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
 
     async with async_session() as session:
         contest = (await session.execute(select(TarotContest).filter_by(id=id))).first()

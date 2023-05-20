@@ -6,8 +6,7 @@ from fastapi import Header, Form, UploadFile, status, APIRouter
 from sqlalchemy import delete, select
 from fastapi.responses import FileResponse, Response
 
-from .consts import async_session, sessions, Upload, UploadJSON, ALLOWED_EXTENSIONS
-
+from .consts import async_session, sessions, Upload, UploadJSON, ALLOWED_EXTENSIONS, TEST_USERNAME
 
 notes = APIRouter()
 
@@ -28,6 +27,9 @@ async def upload_new_note(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     id = str(uuid.uuid4())
     extension = file.filename.split(".")[-1]
     if extension not in ALLOWED_EXTENSIONS:
@@ -75,6 +77,9 @@ async def delete_note(response: Response, id: str = Form(), authorization: str =
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     async with async_session() as session:
         upload = (await session.execute(select(Upload).filter_by(id=id))).first()
         if upload is None or upload[0] is None:
@@ -101,6 +106,9 @@ async def get_note(response: Response, id: str, authorization: str = Header()):
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     async with async_session() as session:
         upload = (await session.execute(select(Upload).filter_by(id=id))).first()
         if upload is None or upload[0] is None:

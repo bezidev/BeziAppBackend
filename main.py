@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from routes.api import api
 
-from src.endpoints.consts import engine, Base, sessions
+from src.endpoints.consts import engine, Base, sessions, TEST_USERNAME
 from src.endpoints.microsoft import translate_days_into_sharepoint, find_base_class, background_sharepoint_job
 
 app = FastAPI()
@@ -43,6 +43,8 @@ async def get_timetable(response: Response, date: str | None, authorization: str
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        return {"classes":{"0":{"1":{"ura":1,"dan":0,"ime":"ZGO (Zgodovina)","kratko_ime":"ZGO","razred":"1.A","profesor":"Jernej Pirnat","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"2":{"ura":2,"dan":0,"ime":"MAT (Matematika)","kratko_ime":"MAT","razred":"1.A","profesor":"Urška Markun","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"3":{"ura":3,"dan":0,"ime":"LUM (Likovna umetnost)","kratko_ime":"LUM","razred":"1.A","profesor":"Tanja Mastnak","ucilnica":"Učilnica 402","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"4":{"ura":4,"dan":0,"ime":"SLO (Slovenščina)","kratko_ime":"SLO","razred":"1.A","profesor":"Mojca Osvald","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"5":{"ura":5,"dan":0,"ime":"KEMv (Kemija-vaje)","kratko_ime":"KEMv","razred":"1.As2","profesor":"Saša Cecowski","ucilnica":"Učilnica 104","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"6":{"ura":6,"dan":0,"ime":"ANG (Angleščina)","kratko_ime":"ANG","razred":"1.A","profesor":"Maja Petričić Štritof","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None}},"1":{"2":{"ura":2,"dan":1,"ime":"ANG (Angleščina)","kratko_ime":"ANG","razred":"1.A","profesor":"Maja Petričić Štritof","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"3":{"ura":3,"dan":1,"ime":"MAT (Matematika)","kratko_ime":"MAT","razred":"1.A","profesor":"Urška Markun","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"4":{"ura":4,"dan":1,"ime":"ZGO (Zgodovina)","kratko_ime":"ZGO","razred":"1.A","profesor":"Jernej Pirnat","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"5":{"ura":5,"dan":1,"ime":"SLO (Slovenščina)","kratko_ime":"SLO","razred":"1.A","profesor":"Mojca Osvald","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"6":{"ura":6,"dan":1,"ime":"NEM (Nemščina)","kratko_ime":"NEM","razred":"1.A","profesor":"Barbara Ovsenik Dolinar","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"7":{"ura":7,"dan":1,"ime":"GEO (Geografija)","kratko_ime":"GEO","razred":"1.A","profesor":"Veronika Lazarini","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None}},"2":{"1":{"ura":1,"dan":2,"ime":"NEM (Nemščina)","kratko_ime":"NEM","razred":"1.A","profesor":"Barbara Ovsenik Dolinar","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"2":{"ura":2,"dan":2,"ime":"GEO (Geografija)","kratko_ime":"GEO","razred":"1.A","profesor":"Veronika Lazarini","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"3":{"ura":3,"dan":2,"ime":"FIZ (Fizika)","kratko_ime":"FIZ","razred":"1.A","profesor":"Monika Vidmar","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"4":{"ura":4,"dan":2,"ime":"SLO (Slovenščina)","kratko_ime":"SLO","razred":"1.A","profesor":"Mojca Osvald","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"5":{"ura":5,"dan":2,"ime":"MAT (Matematika)","kratko_ime":"MAT","razred":"1.A","profesor":"Urška Markun","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"6":{"ura":6,"dan":2,"ime":"ANG (Angleščina)","kratko_ime":"ANG","razred":"1.A","profesor":"Maja Petričić Štritof","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"7":{"ura":7,"dan":2,"ime":"INF (Informatika)","kratko_ime":"INF","razred":"1.A","profesor":"Andrej Šuštaršič","ucilnica":"Učilnica 206","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None}},"3":{"1":{"ura":1,"dan":3,"ime":"INFv (Informatika - vaje)","kratko_ime":"INFv","razred":"1.As2","profesor":"Andrej Šuštaršič","ucilnica":"Učilnica 206","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"2":{"ura":2,"dan":3,"ime":"SLO (Slovenščina)","kratko_ime":"SLO","razred":"1.A","profesor":"Mojca Osvald","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"3":{"ura":3,"dan":3,"ime":"ŠVZ-M (Športna vzgoja)","kratko_ime":"ŠVZ-M","razred":"1.A_ŠVZ-M","profesor":"Peter Cizl","ucilnica":"Telovadnica","dnevniski_zapis":True,"vpisano_nadomescanje":True,"opozori":None},"4":{"ura":4,"dan":3,"ime":"BIOp (Biologija-pouk, cikli)","kratko_ime":"BIOp","razred":"1.A","profesor":"Polona Gros Remec","ucilnica":"Učilnica 306","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"5":{"ura":5,"dan":3,"ime":"KEM (Kemija)","kratko_ime":"KEM","razred":"1.A","profesor":"Saša Cecowski","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"6":{"ura":6,"dan":3,"ime":"NEM (Nemščina)","kratko_ime":"NEM","razred":"1.A","profesor":"Barbara Ovsenik Dolinar","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"7":{"ura":7,"dan":3,"ime":"RU (Razredna ura)","kratko_ime":"RU","razred":"1.A","profesor":"Saša Cecowski","ucilnica":"Učilnica 107","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None}},"4":{"1":{"ura":1,"dan":4,"ime":"ŠVZ-M (Športna vzgoja)","kratko_ime":"ŠVZ-M","razred":"1.A_ŠVZ-M","profesor":"Domen Hren","ucilnica":"Telovadnica","dnevniski_zapis":True,"vpisano_nadomescanje":True,"opozori":None},"2":{"ura":2,"dan":4,"ime":"ŠVZ-M (Športna vzgoja)","kratko_ime":"ŠVZ-M","razred":"1.A_ŠVZ-M","profesor":"Domen Hren","ucilnica":"Telovadnica","dnevniski_zapis":True,"vpisano_nadomescanje":True,"opozori":None},"3":{"ura":3,"dan":4,"ime":"KEMp (Kemija-pouk, cikli)","kratko_ime":"KEMp","razred":"1.A","profesor":"Saša Cecowski","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"4":{"ura":4,"dan":4,"ime":"MAT (Matematika)","kratko_ime":"MAT","razred":"1.A","profesor":"Urška Markun","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"5":{"ura":5,"dan":4,"ime":"BIO (Biologija)","kratko_ime":"BIO","razred":"1.A","profesor":"Polona Gros Remec","ucilnica":"Učilnica 105","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"6":{"ura":6,"dan":4,"ime":"GLA (Glasba)","kratko_ime":"GLA","razred":"1.A","profesor":"Kristina Drnovšek","ucilnica":"Učilnica 308","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None},"7":{"ura":7,"dan":4,"ime":"LUM (Likovna umetnost)","kratko_ime":"LUM","razred":"1.A","profesor":"Tanja Mastnak","ucilnica":"Učilnica 402","dnevniski_zapis":True,"vpisano_nadomescanje":False,"opozori":None}},"5":{},"6":{}},"days":["15.05.","16.05.","17.05.","18.05.","19.05.","20.05.","21.05."],"sharepoint_days":["15.5","16.5","17.5","18.5","19.5","20.5","21.5"]}
     classes, days = await gimsis_session.fetch_timetable(date)
     if len(days) == 0:
         # Session token has expired, new login is needed
@@ -227,6 +229,9 @@ async def get_absences(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     absences = await gimsis_session.fetch_absences(from_date, to_date=to_date, ni_obdelano=ni_obdelano, opraviceno=opraviceno, neopraviceno=neopraviceno, ne_steje=ne_steje, type=type)
 
     return {"absences": absences, "type": type}
@@ -238,6 +243,9 @@ async def get_gradings(response: Response, authorization: str = Header()):
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     gradings = await gimsis_session.fetch_gradings()
     return {"gradings": gradings}
 
@@ -266,6 +274,9 @@ async def get_grades(response: Response, authorization: str = Header()):
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     gimsis_session = sessions[authorization]
+    if gimsis_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     grades = await gimsis_session.fetch_grades()
     if len(grades) == 0:
         await gimsis_session.login()
@@ -277,7 +288,13 @@ async def get_grades(response: Response, authorization: str = Header()):
 async def login(username: str = Form(), password: str = Form()):
     global sessions
 
-    gimsis = GimSisAPI(username.lower(), password)
+    username = username.lower()
+    if username == TEST_USERNAME: # Lutka account za Google
+        session = base64.b64encode(os.urandom(64)).decode()
+        sessions[session] = GimSisAPI(username, password) # ne prijavimo se v gimsis tho
+        return {"session": session}
+
+    gimsis = GimSisAPI(username, password)
     await gimsis.login()
 
     session = base64.b64encode(os.urandom(64)).decode()
