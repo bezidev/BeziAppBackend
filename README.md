@@ -1,4 +1,4 @@
-<!-- bump5 -->
+<!-- bump6 -->
 
 # BeziAppBackend
 A backend for BežiApp, an alternative and complete solution for Gimnazija Bežigrad students (and parents), written in FastAPI & Python.
