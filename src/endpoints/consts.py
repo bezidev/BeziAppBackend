@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 MS_OAUTH_ID = os.environ["MS_OAUTH_ID"]
 MS_OAUTH_SECRET = os.environ["MS_OAUTH_SECRET"]
-SCOPE = "https://graph.microsoft.com/Files.Read.All"
+SCOPE = "https://graph.microsoft.com/Files.Read.All https://graph.microsoft.com/Sites.Read.All"
 
 sessions: dict[str, GimSisAPI] = {}
 lopolis_sessions: dict[str, LoPolisAPI] = {}
@@ -166,6 +166,21 @@ class TarotContest(Base):
     description = Column(String(200))
     is_private = Column(Boolean)
     has_ended = Column(Boolean)
+
+
+class SharepointNotification(Base):
+    __tablename__ = 'sharepoint_notification'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(1000))
+    description = Column(String(50_000))
+    created_on = Column(Integer)
+    modified_on = Column(Integer)
+    modified_by = Column(String(1000))
+    created_by = Column(String(1000))
+    seen_by = Column(String(50_000))
+    expires_on = Column(Integer)
+    has_attachments = Column(Boolean)
+
 
 class UploadJSON:
     def __init__(self, id: str, filename: str, description: str, subject: str, teacher: str, class_name: str, class_year: str, type: str,

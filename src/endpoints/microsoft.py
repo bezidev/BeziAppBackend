@@ -1,16 +1,89 @@
 import asyncio
+import datetime
 import os
+import time
 
 import aiofiles
 import httpx
 import tabula
 from fastapi import status, APIRouter
 from fastapi.responses import RedirectResponse
+from sqlalchemy import select
 
-from .consts import MS_OAUTH_ID, SCOPE, MS_OAUTH_SECRET
-
+from .consts import MS_OAUTH_ID, SCOPE, MS_OAUTH_SECRET, async_session, SharepointNotification
 
 microsoft = APIRouter()
+
+
+async def get_sharepoint_notifications(access_token: str):
+    async with httpx.AsyncClient() as client:
+        client.headers = {"Authorization": f"Bearer {access_token}"}
+        next_link = "https://graph.microsoft.com/v1.0/sites/root/lists/54521912-06dd-4ccc-8edb-8173c9629fd8/items"
+        while next_link is not None:
+            print("[SHAREPOINT NOTIFICATIONS] Got a new page link.")
+            disk_contents = await client.get(
+                next_link,
+            )
+            j = disk_contents.json()
+            async with async_session() as session:
+                for sharepoint_object in j["value"]:
+                    id = int(sharepoint_object["id"])
+                    db_object = (await session.execute(select(SharepointNotification).filter_by(id=id))).first()
+                    if db_object is None:
+                        object_detailed = (await client.get(
+                            f"https://graph.microsoft.com/v1.0/sites/root/lists/54521912-06dd-4ccc-8edb-8173c9629fd8/items/{id}",
+                        )).json()
+                        modified_on = int(time.mktime(datetime.datetime.strptime(object_detailed["fields"]["Modified"], "%Y-%m-%dT%H:%M:%SZ").timetuple()))
+                        created_on = int(time.mktime(datetime.datetime.strptime(object_detailed["fields"]["Created"], "%Y-%m-%dT%H:%M:%SZ").timetuple()))
+                        if object_detailed["fields"].get("Expires"):
+                            expires_on = int(time.mktime(datetime.datetime.strptime(object_detailed["fields"]["Expires"],
+                                                                                    "%Y-%m-%dT%H:%M:%SZ").timetuple()))
+                        else:
+                            expires_on = 0
+
+                        obj = SharepointNotification(
+                            id=id,
+                            name=object_detailed["fields"]["Title"],
+                            description=(object_detailed["fields"].get("Body") or "").replace("&#58;", ":"),
+                            created_on=created_on,
+                            modified_on=modified_on,
+                            modified_by=object_detailed["lastModifiedBy"]["user"]["displayName"],
+                            created_by=object_detailed["createdBy"]["user"]["displayName"],
+                            has_attachments=object_detailed["fields"]["Attachments"],
+                            expires_on=expires_on,
+                            seen_by="[]",
+                        )
+                        session.add(obj)
+                        print(f"[SHAREPOINT NOTIFICATIONS] Session added for ID {id}")
+                        continue
+
+                    db_object = db_object[0]
+                    modified_on = int(time.mktime(datetime.datetime.strptime(sharepoint_object["lastModifiedDateTime"],
+                                                                             "%Y-%m-%dT%H:%M:%SZ").timetuple()))
+                    if db_object.modified_on != modified_on:
+                        print(f"[SHAREPOINT NOTIFICATIONS] Change detected on ID {id}")
+                        object_detailed = (await client.get(
+                            f"https://graph.microsoft.com/v1.0/sites/root/lists/54521912-06dd-4ccc-8edb-8173c9629fd8/items/{id}",
+                        )).json()
+                        modified_on = int(time.mktime(datetime.datetime.strptime(object_detailed["fields"]["Modified"],
+                                                                                 "%Y-%m-%dT%H:%M:%SZ").timetuple()))
+                        if object_detailed["fields"].get("Expires"):
+                            expires_on = int(time.mktime(datetime.datetime.strptime(object_detailed["fields"]["Expires"],
+                                                                                     "%Y-%m-%dT%H:%M:%SZ").timetuple()))
+                        else:
+                            expires_on = 0
+
+                        db_object.name = object_detailed["fields"]["Title"]
+                        db_object.description = (object_detailed["fields"].get("Body") or "").replace("&#58;", ":")
+                        db_object.modified_on = modified_on
+                        db_object.modified_by = object_detailed["lastModifiedBy"]["user"]["displayName"]
+                        db_object.has_attachments = object_detailed["fields"]["Attachments"]
+                        db_object.seen_by = "[]"
+                        db_object.expires_on = expires_on
+
+                await session.commit()
+            next_link = j.get("@odata.nextLink")
+        print("[SHAREPOINT NOTIFICATIONS] Done.")
 
 
 async def get_sharepoint_files(access_token: str):
@@ -50,7 +123,6 @@ async def background_sharepoint_job(run_only_once: bool = False):
         try:
             if not os.path.exists("refresh_token.txt"):
                 await (await aiofiles.open("refresh_token.txt", "w+")).close()
-            token = ""
             async with aiofiles.open("refresh_token.txt", "r+") as f:
                 token = await f.read()
             if token == "":
@@ -76,6 +148,7 @@ async def background_sharepoint_job(run_only_once: bool = False):
                     await f.write(refresh_token)
 
                 await get_sharepoint_files(access_token)
+                await get_sharepoint_notifications(access_token)
 
             if run_only_once:
                 return

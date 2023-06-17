@@ -2,9 +2,11 @@ import asyncio
 import base64
 import copy
 import csv
+import json
 import os
 import re
 import io
+import time
 
 import aiofiles as aiofiles
 from fastapi import status, Header, Response, Form, FastAPI
@@ -15,10 +17,11 @@ from datetime import datetime
 
 from gimsisapi import GimSisAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import select
 
 from routes.api import api
 
-from src.endpoints.consts import engine, Base, sessions, TEST_USERNAME
+from src.endpoints.consts import engine, Base, sessions, TEST_USERNAME, async_session, SharepointNotification
 from src.endpoints.microsoft import translate_days_into_sharepoint, find_base_class, background_sharepoint_job
 
 app = FastAPI()
@@ -35,6 +38,106 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(api)
+
+
+@app.get("/notifications", status_code=status.HTTP_200_OK)
+async def get_my_notifications(response: Response, only_new: bool = False, authorization: str = Header()):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    gimsis_session = sessions[authorization]
+    new_notifications = []
+    seen_notifications = []
+    expired_notifications = []
+    async with async_session() as session:
+        db_objects = (await session.execute(select(SharepointNotification))).all()
+        for notification in db_objects:
+            notification = notification[0]
+            if notification.expires_on < time.time():
+                # notifikacija je potekla
+                expired_notifications.append(
+                    {
+                        "id": notification.id,
+                        "name": notification.name,
+                        "description": notification.description,
+                        "created_on": notification.created_on,
+                        "created_by": notification.created_by,
+                        "modified_on": notification.modified_on,
+                        "modified_by": notification.modified_by,
+                        "expires_on": notification.expires_on,
+                        "has_attachments": notification.has_attachments,
+                    }
+                )
+                continue
+            seen_by = json.loads(notification.seen_by)
+            if gimsis_session.username in seen_by:
+                # uporabnik je to že videl, ni treba, da mu kažemo še enkrat
+                seen_notifications.append(
+                    {
+                        "id": notification.id,
+                        "name": notification.name,
+                        "description": notification.description,
+                        "created_on": notification.created_on,
+                        "created_by": notification.created_by,
+                        "modified_on": notification.modified_on,
+                        "modified_by": notification.modified_by,
+                        "expires_on": notification.expires_on,
+                        "has_attachments": notification.has_attachments,
+                    }
+                )
+                continue
+            new_notifications.append(
+                {
+                    "id": notification.id,
+                    "name": notification.name,
+                    "description": notification.description,
+                    "created_on": notification.created_on,
+                    "created_by": notification.created_by,
+                    "modified_on": notification.modified_on,
+                    "modified_by": notification.modified_by,
+                    "expires_on": notification.expires_on,
+                    "has_attachments": notification.has_attachments,
+                }
+            )
+
+    #new_notifications.reverse()
+    #seen_notifications.reverse()
+    #expired_notifications.reverse()
+
+    if only_new:
+        return new_notifications
+
+    return {
+        "new_notifications": new_notifications,
+        "seen_notifications": seen_notifications,
+        "expired_notifications": expired_notifications,
+    }
+
+
+@app.post("/notifications/{id}", status_code=status.HTTP_200_OK)
+async def update_visibility(
+        response: Response,
+        id: int,
+        authorization: str = Header(),
+):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    gimsis_session = sessions[authorization]
+
+    async with async_session() as session:
+        notification = (await session.execute(select(SharepointNotification).filter_by(id=id))).first()
+        if notification is None or notification[0] is None:
+            response.status_code = status.HTTP_404_NOT_FOUND
+            return
+        notification = notification[0]
+        seen_by = json.loads(notification.seen_by)
+        if gimsis_session.username in seen_by:
+            seen_by.remove(gimsis_session.username)
+        else:
+            seen_by.append(gimsis_session.username)
+        notification.seen_by = json.dumps(seen_by)
+        await session.commit()
 
 
 @app.get("/timetable", status_code=status.HTTP_200_OK)
