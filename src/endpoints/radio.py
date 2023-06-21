@@ -5,7 +5,7 @@ from fastapi import Header, Form, status, APIRouter
 from sqlalchemy import delete, select
 from fastapi.responses import Response
 
-from .consts import async_session, sessions, RadioSuggestion, TEST_USERNAME
+from .consts import async_session, RadioSuggestion, TEST_USERNAME, sessions
 
 radio = APIRouter()
 
@@ -26,14 +26,14 @@ async def new_suggestion(
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
     id = str(uuid.uuid4())
     suggestion = RadioSuggestion(
         id=id,
-        username=gimsis_session.username,
+        username=account_session.username,
         description=description,
         youtube_id=youtube_id,
         name=name,
@@ -53,8 +53,8 @@ async def get_suggestions(response: Response, authorization: str = Header()):
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
     async with async_session() as session:
@@ -77,7 +77,7 @@ async def get_suggestions(response: Response, authorization: str = Header()):
     for i in suggestions:
         i = i[0]
 
-        if gimsis_session.username not in RADIO_ADMINS and i.username != gimsis_session.username:
+        if account_session.username not in RADIO_ADMINS and i.username != account_session.username:
             continue
 
         t = {
@@ -90,7 +90,7 @@ async def get_suggestions(response: Response, authorization: str = Header()):
             "last_status_update": i.last_status_update,
             "submitted_on": i.submitted_on,
             "declined_reason": i.declined_reason,
-            "can_delete": gimsis_session.username == i.username,
+            "can_delete": account_session.username == i.username,
             "vrsta": "",
         }
 
@@ -111,8 +111,8 @@ async def delete_suggestion(response: Response, id: str = Form(), authorization:
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
     async with async_session() as session:
@@ -123,7 +123,7 @@ async def delete_suggestion(response: Response, id: str = Form(), authorization:
 
         suggestion = suggestion[0]
 
-        if suggestion.username != gimsis_session.username:
+        if suggestion.username != account_session.username:
             response.status_code = status.HTTP_403_FORBIDDEN
             return
 
@@ -142,8 +142,8 @@ async def change_suggestion_status(
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username not in RADIO_ADMINS:
+    account_session = sessions[authorization]
+    if account_session.username not in RADIO_ADMINS:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
 
@@ -156,5 +156,5 @@ async def change_suggestion_status(
         if s == "WAITING FOR REVIEW":
             suggestion.reviewed_by = ""
         else:
-            suggestion.reviewed_by = gimsis_session.username
+            suggestion.reviewed_by = account_session.username
         await session.commit()

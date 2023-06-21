@@ -6,7 +6,7 @@ from fastapi import Header, Form, UploadFile, status, APIRouter
 from sqlalchemy import delete, select
 from fastapi.responses import FileResponse, Response
 
-from .consts import async_session, sessions, Upload, UploadJSON, ALLOWED_EXTENSIONS, TEST_USERNAME
+from .consts import async_session, Upload, UploadJSON, ALLOWED_EXTENSIONS, TEST_USERNAME, sessions
 
 notes = APIRouter()
 
@@ -26,8 +26,8 @@ async def upload_new_note(
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
     id = str(uuid.uuid4())
@@ -41,7 +41,7 @@ async def upload_new_note(
     upload = Upload(
         id=id,
         filename=file.filename,
-        username=gimsis_session.username,
+        username=account_session.username,
         description=description,
         filepath=file_path,
         subject=subject,
@@ -61,13 +61,13 @@ async def get_notes(response: Response, authorization: str = Header()):
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
+    account_session = sessions[authorization]
     async with async_session() as session:
         uploads = (await session.execute(select(Upload))).all()
     uploads_json = []
     for i in uploads:
         i = i[0]
-        uploads_json.append(UploadJSON(i.id, i.filename, i.description, i.subject, i.teacher,  i.class_name, i.class_year, i.type, i.username == gimsis_session.username))
+        uploads_json.append(UploadJSON(i.id, i.filename, i.description, i.subject, i.teacher,  i.class_name, i.class_year, i.type, i.username == account_session.username))
     return uploads_json
 
 
@@ -76,8 +76,8 @@ async def delete_note(response: Response, id: str = Form(), authorization: str =
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
     async with async_session() as session:
@@ -88,7 +88,7 @@ async def delete_note(response: Response, id: str = Form(), authorization: str =
 
         upload = upload[0]
 
-        if upload.username != gimsis_session.username:
+        if upload.username != account_session.username:
             response.status_code = status.HTTP_403_FORBIDDEN
             return
         try:
@@ -105,8 +105,8 @@ async def get_note(response: Response, id: str, authorization: str = Header()):
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
     async with async_session() as session:

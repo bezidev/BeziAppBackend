@@ -51,8 +51,8 @@ async def new_game(
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
 
@@ -132,7 +132,7 @@ async def new_game(
             barvni_valat_napovedal="",
             izgubil_monda=game.izgubil_monda,
             v_tri=v_tri,
-            initializer=gimsis_session.username,
+            initializer=account_session.username,
             played_at=int(time.time()),
         )
 
@@ -153,8 +153,8 @@ async def new_contest(
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
 
@@ -164,8 +164,8 @@ async def new_contest(
             if len(i.split(".")) != 2:
                 response.status_code = status.HTTP_400_BAD_REQUEST
                 return
-        if gimsis_session.username not in cs:
-            cs.append(gimsis_session.username)
+        if account_session.username not in cs:
+            cs.append(account_session.username)
         contest = TarotContest(
             id=str(uuid.uuid4()),
             contestants=json.dumps(cs),
@@ -187,7 +187,7 @@ async def my_contests(
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
+    account_session = sessions[authorization]
 
     async with async_session() as session:
         contests = (await session.execute(select(TarotContest))).all()
@@ -196,7 +196,7 @@ async def my_contests(
         for contest in contests:
             contest = contest[0]
             contestants = json.loads(contest.contestants)
-            if gimsis_session.username in contestants:
+            if account_session.username in contestants:
                 contests_user.append(contest)
             elif not contest.is_private:
                 contests_public.append(contest)
@@ -212,15 +212,15 @@ async def delete_game(
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
 
     async with async_session() as session:
         game = (await session.execute(select(TarotGame).filter_by(id=id))).first()
         contest = (await session.execute(select(TarotContest).filter_by(id=game[0].contest_id))).first()
-        if gimsis_session.username not in json.loads(contest[0].contestants):
+        if account_session.username not in json.loads(contest[0].contestants):
             response.status_code = status.HTTP_403_FORBIDDEN
             return
         await session.execute(delete(TarotGamePlayer).where(TarotGamePlayer.game_id == id))
@@ -237,15 +237,15 @@ async def delete_contest(
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
 
     async with async_session() as session:
         contest = (await session.execute(select(TarotContest).filter_by(id=id))).first()
         contest = contest[0]
-        if gimsis_session.username not in json.loads(contest.contestants):
+        if account_session.username not in json.loads(contest.contestants):
             response.status_code = status.HTTP_403_FORBIDDEN
             return
         games = await session.execute(select(TarotGame).where(TarotGame.contest_id == id))
@@ -266,8 +266,8 @@ async def add_person(
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
 
@@ -275,7 +275,7 @@ async def add_person(
         contest = (await session.execute(select(TarotContest).filter(TarotContest.id == id))).first()
         contest = contest[0]
         contestants = json.loads(contest.contestants)
-        if gimsis_session.username not in contestants:
+        if account_session.username not in contestants:
             response.status_code = status.HTTP_403_FORBIDDEN
             return
         if person not in contestants:
@@ -293,8 +293,8 @@ async def join_contest(
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
 
@@ -305,8 +305,8 @@ async def join_contest(
         if contest.is_private:
             response.status_code = status.HTTP_409_CONFLICT
             return
-        if gimsis_session.username not in contestants:
-            contestants.append(gimsis_session.username)
+        if account_session.username not in contestants:
+            contestants.append(account_session.username)
         contest.contestants = json.dumps(contestants)
         await session.commit()
 
@@ -320,8 +320,8 @@ async def make_contest_private_or_public(
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
 
@@ -329,7 +329,7 @@ async def make_contest_private_or_public(
         contest = (await session.execute(select(TarotContest).filter(TarotContest.id == id))).first()
         contest = contest[0]
         contestants = json.loads(contest.contestants)
-        if gimsis_session.username not in contestants:
+        if account_session.username not in contestants:
             response.status_code = status.HTTP_403_FORBIDDEN
             return
         contest.is_private = not contest.is_private
@@ -346,8 +346,8 @@ async def remove_person(
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
 
@@ -355,7 +355,7 @@ async def remove_person(
         contest = (await session.execute(select(TarotContest).filter(TarotContest.id == id))).first()
         contest = contest[0]
         contestants = json.loads(contest.contestants)
-        if gimsis_session.username not in contestants:
+        if account_session.username not in contestants:
             response.status_code = status.HTTP_403_FORBIDDEN
             return
         contestants.remove(person.person)
@@ -372,8 +372,8 @@ async def contest(
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
-    gimsis_session = sessions[authorization]
-    if gimsis_session.username == TEST_USERNAME:
+    account_session = sessions[authorization]
+    if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
 
@@ -385,7 +385,7 @@ async def contest(
             return
         contest = contest[0]
         contestants = json.loads(contest.contestants)
-        if gimsis_session.username not in contestants:
+        if account_session.username not in contestants:
             response.status_code = status.HTTP_403_FORBIDDEN
             return
 

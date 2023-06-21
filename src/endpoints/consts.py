@@ -5,13 +5,65 @@ from lopolis import LoPolisAPI
 from sqlalchemy import Column, String, Boolean, Integer
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
+from Crypto.Cipher import AES
+from Crypto import Random
 
 MS_OAUTH_ID = os.environ["MS_OAUTH_ID"]
 MS_OAUTH_SECRET = os.environ["MS_OAUTH_SECRET"]
 SCOPE = "https://graph.microsoft.com/Files.Read.All https://graph.microsoft.com/Sites.Read.All"
 
-sessions: dict[str, GimSisAPI] = {}
+class Session:
+    def __init__(self, username: str, gimsis_password: str, lopolis_username: str | None, lopolis_password: str | None):
+        self.username = username
+        self.lopolis_session: None | LoPolisAPI = None
+        self.lopolis_username = lopolis_username
+        self.lopolis_password = lopolis_password
+        self.gimsis_session = GimSisAPI(username, gimsis_password)
+
+    async def login(self):
+        try:
+            await self.gimsis_session.login()
+        except Exception as e:
+            print(f"[GIMSIS LOGIN] Failed: {e}")
+            pass
+        if self.lopolis_username is None or self.lopolis_password is None:
+            return
+        self.lopolis_session = LoPolisAPI()
+        await self.lopolis_session.get_token(self.lopolis_username, self.lopolis_password)
+
+
+sessions: dict[str, Session] = {}
+gimsis_sessions: dict[str, GimSisAPI] = {}
 lopolis_sessions: dict[str, LoPolisAPI] = {}
+
+import base64
+import hashlib
+from Crypto import Random
+from Crypto.Cipher import AES
+
+BLOCK_SIZE = AES.block_size
+
+def encrypt_key(password: str) -> bytes:
+    return hashlib.sha256(password.encode()).digest()
+
+def encrypt(raw, password):
+    raw = _pad(raw)
+    iv = Random.new().read(AES.block_size)
+    cipher = AES.new(encrypt_key(password), AES.MODE_CBC, iv)
+    return base64.b64encode(iv + cipher.encrypt(raw.encode()))
+
+def decrypt(enc, password):
+    enc = base64.b64decode(enc)
+    iv = enc[:AES.block_size]
+    cipher = AES.new(encrypt_key(password), AES.MODE_CBC, iv)
+    return _unpad(cipher.decrypt(enc[AES.block_size:])).decode('utf-8')
+
+def _pad(s):
+    return s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * chr(BLOCK_SIZE - len(s) % BLOCK_SIZE)
+
+def _unpad(s):
+    return s[:-ord(s[len(s)-1:])]
+
 
 TEST_USERNAME = "test"
 TEST_PASSWORD = "test"
@@ -180,6 +232,16 @@ class SharepointNotification(Base):
     seen_by = Column(String(50_000))
     expires_on = Column(Integer)
     has_attachments = Column(Boolean)
+
+
+class User(Base):
+    __tablename__ = 'user'
+    username = Column(String(1000), primary_key=True, unique=True)
+    password = Column(String(1000))
+    salt = Column(String(1000))
+    gimsis_password = Column(String(1000))
+    lopolis_username = Column(String(1000))
+    lopolis_password = Column(String(1000))
 
 
 class UploadJSON:
