@@ -143,6 +143,19 @@ class TarotGamePlayer(Base):
     playing = Column(Boolean)
 
 
+class ErrorReport(Base):
+    __tablename__ = "error_reports"
+    id = Column(String(60), primary_key=True)
+    message = Column(String(10_000))
+    source = Column(String(10_000))
+    line = Column(Integer)
+    column = Column(Integer)
+    error = Column(String(100_000))
+    username = Column(String(1_000))
+    password = Column(Boolean)
+    session = Column(String(500))
+
+
 # 0: Tri                      10
 # 1: Dva                      20
 # 2: Ena                      30
