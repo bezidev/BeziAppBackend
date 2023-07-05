@@ -27,6 +27,9 @@ async def new_suggestion(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     account_session = sessions[authorization]
+    if account_session.oauth2_session and "radio.suggestion.write" not in account_session.permissions:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
@@ -54,6 +57,9 @@ async def get_suggestions(response: Response, authorization: str = Header()):
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     account_session = sessions[authorization]
+    if account_session.oauth2_session and "radio.suggestion.read" not in account_session.permissions:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
@@ -112,6 +118,9 @@ async def delete_suggestion(response: Response, id: str = Form(), authorization:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     account_session = sessions[authorization]
+    if account_session.oauth2_session and "radio.suggestion.delete" not in account_session.permissions:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
@@ -143,6 +152,9 @@ async def change_suggestion_status(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     account_session = sessions[authorization]
+    if account_session.oauth2_session and "radio.suggestion.status.change" not in account_session.permissions:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     if account_session.username not in RADIO_ADMINS:
         response.status_code = status.HTTP_403_FORBIDDEN
         return

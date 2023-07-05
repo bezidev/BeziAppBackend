@@ -1,10 +1,8 @@
 import base64
-import json
 import os
-import time
 import bcrypt
 
-from fastapi import APIRouter, Header, Body, Form
+from fastapi import APIRouter, Header, Form
 from gimsisapi import GimSisAPI
 from sqlalchemy import select
 from starlette import status
@@ -38,6 +36,8 @@ async def login(response: Response, username: str = Form(), password: str = Form
                 gimsis_password=password,
                 lopolis_username=None,
                 lopolis_password=None,
+                oauth2_session=False,
+                permissions=None,
             )
             break
         return {
@@ -110,6 +110,8 @@ async def login(response: Response, username: str = Form(), password: str = Form
                     gimsis_password=password,
                     lopolis_username=None,
                     lopolis_password=None,
+                    oauth2_session=False,
+                    permissions=None,
                 )
                 try:
                     await sessions[login_session].login()
@@ -170,7 +172,14 @@ async def login(response: Response, username: str = Form(), password: str = Form
             login_session = base64.b64encode(os.urandom(64)).decode()
             if sessions.get(login_session) is not None:
                 continue
-            sessions[login_session] = Session(username=username, gimsis_password=gimsis_password, lopolis_username=user.lopolis_username, lopolis_password=lopolis_password)
+            sessions[login_session] = Session(
+                username=username,
+                gimsis_password=gimsis_password,
+                lopolis_username=user.lopolis_username,
+                lopolis_password=lopolis_password,
+                oauth2_session=False,
+                permissions=None,
+            )
             break
 
         # Trik je v tem, da lahko dostopamo do BežiApp računa tudi, ko nimamo GimSIS-a, če smo se predhodno registrirali z GimSIS-om,
@@ -200,6 +209,9 @@ async def change_password(response: Response, pass_type: str = Form(), current_p
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     account_session = sessions[authorization]
+    if account_session.oauth2_session:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
@@ -271,3 +283,4 @@ async def change_password(response: Response, pass_type: str = Form(), current_p
             "session": None,
             "error": None,
         }
+

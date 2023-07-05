@@ -27,6 +27,9 @@ async def upload_new_note(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     account_session = sessions[authorization]
+    if account_session.oauth2_session and "notes.write" not in account_session.permissions:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
@@ -62,6 +65,9 @@ async def get_notes(response: Response, authorization: str = Header()):
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     account_session = sessions[authorization]
+    if account_session.oauth2_session and "notes.read" not in account_session.permissions:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     async with async_session() as session:
         uploads = (await session.execute(select(Upload))).all()
     uploads_json = []
@@ -77,6 +83,9 @@ async def delete_note(response: Response, id: str = Form(), authorization: str =
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     account_session = sessions[authorization]
+    if account_session.oauth2_session and "notes.delete" not in account_session.permissions:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
@@ -106,6 +115,9 @@ async def get_note(response: Response, id: str, authorization: str = Header()):
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     account_session = sessions[authorization]
+    if account_session.oauth2_session and "notes.read" not in account_session.permissions:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return

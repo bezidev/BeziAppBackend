@@ -12,4 +12,5 @@ sqlalchemy
 asyncpg
 bcrypt
 pycryptodome
+emoji
 

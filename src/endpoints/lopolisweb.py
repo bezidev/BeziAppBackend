@@ -18,6 +18,9 @@ async def get_meals(response: Response, month: str, year: str, authorization: st
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     account_session = sessions[authorization]
+    if account_session.oauth2_session and "lopolis.meals.read" not in account_session.permissions:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
@@ -44,6 +47,9 @@ async def set_meals(response: Response, month: str, year: str, authorization: st
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     account_session = sessions[authorization]
+    if account_session.oauth2_session and "lopolis.meals.write" not in account_session.permissions:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
@@ -70,6 +76,9 @@ async def get_checkouts(response: Response, month: str, year: str, authorization
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     account_session = sessions[authorization]
+    if account_session.oauth2_session and "lopolis.checkouts.read" not in account_session.permissions:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
@@ -96,6 +105,9 @@ async def set_checkouts(response: Response, month: str, year: str, authorization
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
     account_session = sessions[authorization]
+    if account_session.oauth2_session and "lopolis.checkouts.write" not in account_session.permissions:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return

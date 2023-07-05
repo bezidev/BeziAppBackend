@@ -1,24 +1,68 @@
 import os
+from typing import List
 
+import emoji
 from gimsisapi import GimSisAPI
 from lopolis import LoPolisAPI
-from sqlalchemy import Column, String, Boolean, Integer
+from sqlalchemy import Column, String, Boolean, Integer, Float
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
-from Crypto.Cipher import AES
-from Crypto import Random
 
 MS_OAUTH_ID = os.environ["MS_OAUTH_ID"]
 MS_OAUTH_SECRET = os.environ["MS_OAUTH_SECRET"]
 SCOPE = "https://graph.microsoft.com/Files.Read.All https://graph.microsoft.com/Sites.Read.All"
 
+def no_emoji_text(text):
+    return emoji.replace_emoji(text, replace='')
+
+OAUTH2_VALID_PERMISSIONS = [
+    "gimsis.timetable",
+    "gimsis.absences",
+    "gimsis.gradings",
+    "gimsis.grades",
+    "gimsis.user.read.usernameemail",
+    "gimsis.user.read.namesurname",
+    "gimsis.user.read.sex",
+    "gimsis.user.read.role",
+    "sharepoint.notifications.read",
+    "sharepoint.notifications.write",
+    "lopolis.meals.read",
+    "lopolis.meals.write",
+    "lopolis.checkouts.read",
+    "lopolis.checkouts.write",
+    "notes.read",
+    "notes.delete",
+    "notes.write",
+    "radio.suggestion.read",
+    "radio.suggestion.write",
+    "radio.suggestion.delete",
+    "radio.suggestion.status.change",
+    "tarot.read",
+    "tarot.game.write",
+    "tarot.game.delete",
+    "tarot.contests.write",
+    "tarot.contests.delete",
+]
+
 class Session:
-    def __init__(self, username: str, gimsis_password: str, lopolis_username: str | None, lopolis_password: str | None):
+    def __init__(
+            self,
+            username: str,
+            gimsis_password: str,
+            lopolis_username: str | None,
+            lopolis_password: str | None,
+            oauth2_session: bool = False,
+            permissions: List[str] | None = None,
+    ):
+        if permissions is None:
+            permissions = []
         self.username = username
         self.lopolis_session: None | LoPolisAPI = None
         self.lopolis_username = lopolis_username
         self.lopolis_password = lopolis_password
         self.gimsis_session = GimSisAPI(username, gimsis_password)
+        self.oauth2_session = oauth2_session
+        self.permissions = permissions
 
     async def login(self):
         try:
@@ -255,6 +299,18 @@ class User(Base):
     gimsis_password = Column(String(1000))
     lopolis_username = Column(String(1000))
     lopolis_password = Column(String(1000))
+
+
+class OAUTH2App(Base):
+    __tablename__ = 'oauth2_apps'
+    id = Column(String(60), primary_key=True)
+    redirect_url = Column(String(200), unique=True)
+    owner = Column(String(200))
+    name = Column(String(100))
+    description = Column(String(200))
+    verified = Column(Boolean)
+    created_on = Column(Float)
+    modified_on = Column(Float)
 
 
 class UploadJSON:
