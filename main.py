@@ -410,6 +410,25 @@ async def get_gradings_ical(username: str, password: str):
     return StreamingResponse(io.StringIO(c.serialize()), media_type="text/calendar")
 
 
+@app.get("/teachers", status_code=status.HTTP_200_OK)
+async def get_teachers(response: Response, authorization: str = Header()):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    account_session = sessions[authorization]
+    if account_session.oauth2_session and "gimsis.teachers" not in account_session.permissions:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+    if account_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+    teachers = await account_session.gimsis_session.fetch_teachers()
+    if len(teachers) == 0:
+        await account_session.login()
+        teachers = await account_session.gimsis_session.fetch_teachers()
+    return {"teachers": teachers}
+
+
 @app.get("/grades", status_code=status.HTTP_200_OK)
 async def get_grades(response: Response, authorization: str = Header()):
     if authorization == "" or sessions.get(authorization) is None:

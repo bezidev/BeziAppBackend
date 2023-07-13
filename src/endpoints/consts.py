@@ -20,6 +20,7 @@ OAUTH2_VALID_PERMISSIONS = [
     "gimsis.absences",
     "gimsis.gradings",
     "gimsis.grades",
+    "gimsis.teachers",
     "gimsis.user.read.usernameemail",
     "gimsis.user.read.namesurname",
     "gimsis.user.read.sex",
