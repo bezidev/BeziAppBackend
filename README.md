@@ -3,6 +3,15 @@
 # BeziAppBackend
 A backend for BežiApp, an alternative and complete solution for Gimnazija Bežigrad students (and parents), written in FastAPI & Python.
 
+# Functionalities
+- [x] Integration with GimSIS - timetable, grades, gradings, absences, teachers etc.
+- [x] Integration with Lo.Polis - fetch & change meals and checkouts
+- [x] Examination (test) and note upload
+- [x] School radio
+- [x] Tarock/tarot counting software
+- [x] OAUTH2 integration
+- [x] BežiApp account system
+
 # The problem
 Gimnazija Bežigrad has made a very poorly written program as an alternative to [eAsistent](https://easistent.com), called GimSIS.
 It's written in ASP.NET and not only it has a very outdated design, but also has many security loopholes, which haven't been addressed for years.
