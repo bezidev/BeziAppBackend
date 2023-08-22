@@ -43,6 +43,8 @@ OAUTH2_VALID_PERMISSIONS = [
     "tarot.game.delete",
     "tarot.contests.write",
     "tarot.contests.delete",
+    "notifications.write",
+    "notifications.delete",
 ]
 
 class Session:
@@ -290,6 +292,16 @@ class SharepointNotification(Base):
     seen_by = Column(String(50_000))
     expires_on = Column(Integer)
     has_attachments = Column(Boolean)
+
+
+class DeveloperNotification(Base):
+    __tablename__ = 'developer_notifications'
+    id = Column(String(60), primary_key=True)
+    name = Column(String(1000))
+    description = Column(String(50_000))
+    created_on = Column(Integer)
+    created_by = Column(String(1000))
+    notification_type = Column(String(100))
 
 
 class User(Base):
