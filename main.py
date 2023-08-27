@@ -457,18 +457,27 @@ async def get_user_info(response: Response, authorization: str = Header()):
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
-    profile = account_session.gimsis_session.my_profile()
+
     filtered_profile = {}
-    if not account_session.oauth2_session or "gimsis.user.read.usernameemail" in account_session.permissions:
-        filtered_profile["username"] = profile["username"]
-        filtered_profile["email"] = profile["email"]
-    if not account_session.oauth2_session or "gimsis.user.read.namesurname" in account_session.permissions:
-        filtered_profile["name"] = profile["name"]
-        filtered_profile["surname"] = profile["surname"]
-    if not account_session.oauth2_session or "gimsis.user.read.sex" in account_session.permissions:
-        filtered_profile["sex"] = profile["sex"]
-    if not account_session.oauth2_session or "gimsis.user.read.role" in account_session.permissions:
-        filtered_profile["user_role"] = profile["user_role"]
+
+    try:
+        profile = account_session.gimsis_session.my_profile()
+        if not account_session.oauth2_session or "gimsis.user.read.usernameemail" in account_session.permissions:
+            filtered_profile["username"] = profile["username"]
+            filtered_profile["email"] = profile["email"]
+        if not account_session.oauth2_session or "gimsis.user.read.namesurname" in account_session.permissions:
+            filtered_profile["name"] = profile["name"]
+            filtered_profile["surname"] = profile["surname"]
+        if not account_session.oauth2_session or "gimsis.user.read.sex" in account_session.permissions:
+            filtered_profile["sex"] = profile["sex"]
+        if not account_session.oauth2_session or "gimsis.user.read.role" in account_session.permissions:
+            filtered_profile["user_role"] = profile["user_role"]
+    except Exception as e:
+        print(f"Failed while requesting from GimSIS. Falling back to local knowledge. Exception: {e}")
+        if not account_session.oauth2_session or "gimsis.user.read.usernameemail" in account_session.permissions:
+            filtered_profile["username"] = account_session.username
+            filtered_profile["email"] = ""
+
     return filtered_profile
 
 

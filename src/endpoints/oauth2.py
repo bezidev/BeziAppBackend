@@ -3,6 +3,7 @@ import json
 import os
 import time
 import uuid
+import urllib.parse
 
 from fastapi import APIRouter, Form, Header
 from sqlalchemy import select
@@ -70,9 +71,12 @@ async def oauth2_login(
             )
             break
 
+        f = {"session": login_session}
+        query = urllib.parse.urlencode(f)
+
         return {
             "type": "login_success",
-            "data": f"{oauth2_app.redirect_url}?session={login_session}",
+            "data": f"{oauth2_app.redirect_url}?{query}",
             "error": None,
         }
 
