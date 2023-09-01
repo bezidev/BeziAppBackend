@@ -6,7 +6,7 @@ import uuid
 import urllib.parse
 
 from fastapi import APIRouter, Form, Header
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from starlette import status
 from starlette.responses import Response
 
@@ -180,6 +180,38 @@ async def patch_oauth2_app(
         oauth2_app.redirect_url = redirect_url
         oauth2_app.modified_on = time.time()
         oauth2_app.verified = False
+        await session.commit()
+
+
+@oauth2.delete("/oauth2/apps/{id}", status_code=status.HTTP_200_OK)
+async def delete_oauth2_app(
+        response: Response,
+        id: str,
+        authorization: str = Header(),
+):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    account_session = sessions[authorization]
+    if account_session.oauth2_session:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+    if account_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+
+    async with async_session() as session:
+        oauth2_app = (await session.execute(select(OAUTH2App).filter_by(id=id))).first()
+        if oauth2_app is None or oauth2_app[0] is None:
+            response.status_code = status.HTTP_404_NOT_FOUND
+            return
+
+        oauth2_app = oauth2_app[0]
+        if oauth2_app.owner != account_session.username:
+            response.status_code = status.HTTP_403_FORBIDDEN
+            return
+
+        await session.execute(delete(OAUTH2App).where(OAUTH2App.id == id))
         await session.commit()
 
 
