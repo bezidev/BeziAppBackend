@@ -8,6 +8,9 @@ import re
 import io
 import time
 import typing
+import src.pdfparsers.temppdf as temppdf
+import src.pdfparsers.untis202223 as untis2223
+import src.pdfparsers.untis202324 as untis2324
 
 import aiofiles as aiofiles
 from fastapi import status, Header, Response, Form, FastAPI
@@ -40,6 +43,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(api)
+
+TIPI_NADOMESCANJ = ["Nadomeščanje", "Odpade", "Zaposlitev"]
 
 
 @app.get("/notifications", status_code=status.HTTP_200_OK)
@@ -231,108 +236,43 @@ async def get_timetable(response: Response, date: str | None, authorization: str
             f"substitutions/nadomescanje_{day}..csv",
             f"substitutions/nadomescanje_{day}.novo.csv",
             f"substitutions/nadomescanje_{day}_intranet.csv",
-            
-            f"substitutions/Nadomeščanje_{day}.csv",
-            f"substitutions/Nadomeščanje_{day}..csv",
-            f"substitutions/Nadomeščanje_{day}.novo.csv",
-            f"substitutions/Nadomeščanje_{day}_intranet.csv",
-            f"substitutions/Nadomescanje_{day}.csv",
-            f"substitutions/Nadomescanje_{day}..csv",
-            f"substitutions/Nadomescanje_{day}.novo.csv",
-            f"substitutions/Nadomescanje_{day}_intranet.csv",
+
+            f"substitutions/nadomeščenje_{day}.csv",
+            f"substitutions/nadomeščenje_{day}..csv",
+            f"substitutions/nadomeščenje_{day}.novo.csv",
+            f"substitutions/nadomeščenje_{day}_intranet.csv",
+            f"substitutions/nadomescenje_{day}.csv",
+            f"substitutions/nadomescenje_{day}..csv",
+            f"substitutions/nadomescenje_{day}.novo.csv",
+            f"substitutions/nadomescenje_{day}_intranet.csv",
         ]
         for sharepoint_filename in sharepoint_filenames:
             if not os.path.exists(sharepoint_filename):
-                print(f"[SHAREPOINT] Could not find a file {sharepoint_filename}")
+                #print(f"[SHAREPOINT] Could not find a file {sharepoint_filename}")
                 continue
             async with aiofiles.open(sharepoint_filename, "r") as f:
                 print(f"[SHAREPOINT] File {sharepoint_filename} exists.")
                 ls = await f.readlines()
                 lines = csv.reader(ls, delimiter=',')
                 if "ura,razred,učilnica,nadomešča,komentar\n" in ls:
-                    print(f"[SUBSTITUTION PARSER] Parsing using the new PDF format.")
-                    for csv_values in lines:
-                        if csv_values[0] == "ura":
-                            continue
-                        print(csv_values[1].replace(". ", ""), all_classes)
-                        if not csv_values[1].replace(". ", "") in all_classes:
-                            continue
-                        hours = [int(csv_values[0].replace(".", ""))]
-                        print(hours)
-                        for n in classes[i].keys():
-                            try:
-                                sharepoint_gimsis_name = re.findall(r'\((.*?)\)', classes[i][n].ime)[0]
-                            except Exception as e:
-                                print(f"[E] {e} {classes[i][n].ime}")
-                            if classes[i][n].ura in hours:
-                                if "vaje" in sharepoint_gimsis_name:
-                                    if sharepoint_gimsis_name not in csv_values[6] and (
-                                            classes[i][n].opozori is None or classes[i][n].opozori):
-                                        print(sharepoint_gimsis_name, classes[i][n].ime, csv_values)
-                                        classes[i][n].opozori = True
-                                        continue
-                                    else:
-                                        classes[i][n].opozori = False
-                                nadomesca = csv_values[3].split(" - ")
-                                if len(nadomesca) == 1:
-                                    nadomesca = csv_values[3].split(" – ")
-                                classes[i][n].gimsis_kratko_ime = classes_archive[i][n].kratko_ime
-                                classes[i][n].gimsis_ime = classes_archive[i][n].ime
-                                classes[i][n].kratko_ime = nadomesca[-1]
-                                classes[i][n].profesor = nadomesca[0]
-                                classes[i][n].odpade = "/" in classes[i][n].profesor
-                                try:
-                                    classes[i][n].ucilnica = f"Učilnica {int(csv_values[2])}"
-                                except:
-                                    classes[i][n].ucilnica = csv_values[2]
-                                classes[i][n].ime = nadomesca[-1]
-                                classes[i][n].opis = csv_values[4]
-                                classes[i][n].tip_izostanka = "Tip izostanka ni dan"
-                                classes[i][n].fixed_by_sharepoint = True
+                    print(f"[SUBSTITUTION PARSER] Parsing using the temporary PDF format. Now deprecated.")
+                    classes = temppdf.parse(lines, all_classes, classes_archive, classes, i)
                     continue
 
+                untis = 2023
                 for csv_values in lines:
-                    if not csv_values[1] in all_classes:
-                        continue
-                    if " - " in csv_values[0]:
-                        h = csv_values[0].split(" - ")
-                        hours = range(int(h[0]), int(h[1]) + 1)
-                    else:
-                        hours = [int(csv_values[0])]
-                    #print(hours)
-                    for n in classes[i].keys():
-                        try:
-                            sharepoint_gimsis_name = re.findall(r'\((.*?)\)', classes[i][n].ime)[0]
-                        except Exception as e:
-                            print(f"[E] {e} {classes[i][n].ime}")
-                        if classes[i][n].ura in hours:
-                            if "vaje" in sharepoint_gimsis_name:
-                                if sharepoint_gimsis_name not in csv_values[6] and (classes[i][n].opozori is None or classes[i][n].opozori):
-                                    print(sharepoint_gimsis_name, classes[i][n].ime, csv_values)
-                                    classes[i][n].opozori = True
-                                    continue
-                                else:
-                                    classes[i][n].opozori = False
-                            classes[i][n].gimsis_kratko_ime = classes_archive[i][n].kratko_ime
-                            classes[i][n].gimsis_ime = classes_archive[i][n].ime
-                            if csv_values[6] != csv_values[7]:
-                                classes[i][n].kratko_ime = csv_values[7]
-                            classes[i][n].profesor = csv_values[3]
-                            classes[i][n].odpade = "---" in classes[i][n].profesor
-                            try:
-                                classes[i][n].ucilnica = f"Učilnica {int(csv_values[5])}"
-                            except:
-                                classes[i][n].ucilnica = csv_values[5]
-                            if classes[i][n].kratko_ime == csv_values[7]:
-                                classes[i][n].ime = csv_values[7]
-                            else:
-                                classes[i][n].ime = f"{classes[i][n].kratko_ime} ({csv_values[7]})"
-                            classes[i][n].opis = csv_values[8]
-                            try:
-                                classes[i][n].tip_izostanka = csv_values[9]
-                            except:
-                                classes[i][n].tip_izostanka = "Tip izostanka ni dan"
-                            classes[i][n].fixed_by_sharepoint = True
+                    tip = csv_values[0]
+                    if tip in TIPI_NADOMESCANJ:
+                        untis = 2024
+                    break
+
+                if untis == 2023:
+                    print(f"[SUBSTITUTION PARSER] Parsing using the Untis 2022/2023 format. Now deprecated.")
+                    classes = untis2223.parse(lines, all_classes, classes_archive, classes, i)
+                    continue
+
+                print(f"[SUBSTITUTION PARSER] Parsing using the Untis 2023/2024 format.")
+                classes = untis2324.parse(lines, all_classes, classes_archive, classes, i)
 
     return {"classes": classes, "days": days, "sharepoint_days": sharepoint_days}
 
