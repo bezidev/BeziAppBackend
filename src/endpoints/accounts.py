@@ -1,4 +1,5 @@
 import base64
+import json
 import os
 import bcrypt
 
@@ -43,6 +44,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
         return {
             "type": "login_success",
             "data": "OK",
+            "palette": [],
             "session": login_session,
             "error": None,
         }
@@ -196,9 +198,15 @@ async def login(response: Response, username: str = Form(), password: str = Form
         #        "error": str(e),
         #    }
 
+        try:
+            palette = json.loads(user.palette)
+        except:
+            palette = []
+
         return {
             "type": "login_success",
             "data": "OK",
+            "palette": palette,
             "session": login_session,
             "error": None,
         }
@@ -283,4 +291,68 @@ async def change_password(response: Response, pass_type: str = Form(), current_p
             "session": None,
             "error": None,
         }
+
+
+@accounts.get("/palette", status_code=status.HTTP_200_OK)
+async def get_palette(response: Response, authorization: str = Header()):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    account_session = sessions[authorization]
+    if account_session.oauth2_session:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+    if account_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+
+
+    async with async_session() as session:
+        user = (await session.execute(select(User).filter_by(username=account_session.username))).first()
+        if user is None or user[0] is None:
+            response.status_code = status.HTTP_403_FORBIDDEN
+            return
+
+        user = user[0]
+
+        try:
+            palette = json.loads(user.palette)
+        except:
+            palette = []
+
+        return palette
+
+
+@accounts.patch("/palette", status_code=status.HTTP_200_OK)
+async def update_palette(response: Response, palette: str = Form(), authorization: str = Header()):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    account_session = sessions[authorization]
+    if account_session.oauth2_session:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+    if account_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+
+
+    async with async_session() as session:
+        user = (await session.execute(select(User).filter_by(username=account_session.username))).first()
+        if user is None or user[0] is None:
+            response.status_code = status.HTTP_403_FORBIDDEN
+            return
+
+        user = user[0]
+
+        try:
+            palette = json.loads(palette)
+            user.palette = json.dumps(palette)
+        except:
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return
+
+        await session.commit()
+
+        return "OK"
 

@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN palette VARCHAR(5000) DEFAULT '[]';

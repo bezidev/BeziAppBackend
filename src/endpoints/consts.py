@@ -312,6 +312,7 @@ class User(Base):
     gimsis_password = Column(String(1000))
     lopolis_username = Column(String(1000))
     lopolis_password = Column(String(1000))
+    palette = Column(String(5000))
 
 
 class OAUTH2App(Base):
