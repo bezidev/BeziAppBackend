@@ -98,6 +98,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
                 password=bcrypt_password.decode("utf-8"),
                 lopolis_username="",
                 lopolis_password="",
+                palette="[]",
             )
 
             session.add(user)
