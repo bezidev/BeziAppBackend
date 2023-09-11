@@ -237,9 +237,6 @@ async def get_oauth2_app(
             response.status_code = status.HTTP_404_NOT_FOUND
             return
         oauth2_app = oauth2_app[0]
-        if oauth2_app.owner != account_session.username:
-            response.status_code = status.HTTP_403_FORBIDDEN
-            return
         return {
             "id": oauth2_app.id,
             "redirect_url": oauth2_app.redirect_url,
