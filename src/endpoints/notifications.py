@@ -67,7 +67,7 @@ async def new_notification(
 @notifications.get("/developers/notifications", status_code=status.HTTP_200_OK)
 async def get_notifications():
     async with async_session() as session:
-        uploads = (await session.execute(select(DeveloperNotification))).all()
+        uploads = (await session.execute(select(DeveloperNotification).order_by(DeveloperNotification.created_on.desc()))).all()
     uploads_json = []
     for i in uploads:
         i = i[0]
