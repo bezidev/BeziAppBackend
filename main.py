@@ -1,21 +1,18 @@
 import asyncio
-import base64
 import copy
 import csv
 import json
 import os
-import re
 import io
 import time
-import typing
 import src.pdfparsers.temppdf as temppdf
 import src.pdfparsers.untis202223 as untis2223
 import src.pdfparsers.untis202324 as untis2324
+import src.pdfparsers.untis202324v2 as untis2324v2
 
 import aiofiles as aiofiles
-from fastapi import status, Header, Response, Form, FastAPI
+from fastapi import status, Header, Response, FastAPI
 from fastapi.responses import StreamingResponse
-from gimsisapi.formtagparser import GimSisUra
 from ics import Calendar, Event
 from datetime import datetime
 
@@ -25,8 +22,7 @@ from sqlalchemy import select
 
 from routes.api import api
 
-from src.endpoints.consts import engine, Base, gimsis_sessions, TEST_USERNAME, async_session, SharepointNotification, \
-    sessions
+from src.endpoints.consts import engine, Base, TEST_USERNAME, async_session, SharepointNotification, sessions
 from src.endpoints.microsoft import translate_days_into_sharepoint, find_base_class, background_sharepoint_job
 
 app = FastAPI()
@@ -191,29 +187,6 @@ async def get_timetable(response: Response, date: str | None, authorization: str
     sharepoint_days = translate_days_into_sharepoint(days)
     all_classes = find_base_class(classes)
 
-    if "1A" in all_classes:
-        # ročni popravki za 1.A
-        if len(classes[0].keys()) != 0 and classes[0].get(6) is None:
-            classes[0][6] = GimSisUra(6, 0, "ANG (Angleščina)", "ANG", "1.A", "Maja Petričić Štritof", "Učilnica 105", False, False)
-            classes[0][6].rocno = True
-        if "22.02." in days:
-            for i in range(9):
-                classes[2][i] = GimSisUra(i, 2, "ZD (Zdravniški pregled)", "ZD", "1.A", "ZD",
-                                          "ZD Bežigrad", False, False)
-                classes[2][i].rocno = True
-        if "10.03." in days:
-            classes[4][7] = GimSisUra(7, 4, "OIV (Likovna umetnost - obisk galerije)", "OIV-LUM", "1.A", "Tanja Mastnak",
-                                      "Galerija", False, False)
-            classes[4][7].rocno = True
-        if "23.02." in days:
-            classes[3][7] = GimSisUra(7, 3, "KIZ (Knjižnično-informacijska znanja - obisk knjižnice Bežigrad)", "KIZ", "1.A", "Savina Zwitter",
-                                      "Galerija", False, False)
-            classes[3][7].rocno = True
-            classes[3][8] = GimSisUra(8, 3, "KIZ (Knjižnično-informacijska znanja - obisk knjižnice Bežigrad)", "KIZ",
-                                      "1.A", "Savina Zwitter",
-                                      "Galerija", False, False)
-            classes[3][8].rocno = True
-
     for i, day in enumerate(days):
         for grading in gradings:
             if day not in grading.datum:
@@ -259,20 +232,28 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                     classes = temppdf.parse(lines, all_classes, classes_archive, classes, i)
                     continue
 
-                untis = 2023
+                untis = "2023"
                 for csv_values in lines:
                     tip = csv_values[0]
+                    if tip == "Št.ure":
+                        untis = "2024v2"
                     if tip in TIPI_NADOMESCANJ:
-                        untis = 2024
+                        untis = "2024"
                     break
 
-                if untis == 2023:
+                if untis == "2023":
                     print(f"[SUBSTITUTION PARSER] Parsing using the Untis 2022/2023 format. Now deprecated.")
                     classes = untis2223.parse(lines, all_classes, classes_archive, classes, i)
                     continue
 
+                if untis == "2024":
+                    print(f"[SUBSTITUTION PARSER] Parsing using the Untis 2023/2024 format.")
+                    classes = untis2324.parse(lines, all_classes, classes_archive, classes, i)
+                    continue
+
                 print(f"[SUBSTITUTION PARSER] Parsing using the Untis 2023/2024 format.")
-                classes = untis2324.parse(lines, all_classes, classes_archive, classes, i)
+                classes = untis2324v2.parse(lines, all_classes, classes_archive, classes, i)
+
 
     return {"classes": classes, "days": days, "sharepoint_days": sharepoint_days}
 
@@ -401,7 +382,7 @@ async def get_user_info(response: Response, authorization: str = Header()):
     filtered_profile = {}
 
     try:
-        profile = account_session.gimsis_session.my_profile()
+        profile = await account_session.gimsis_session.my_profile()
         if not account_session.oauth2_session or "gimsis.user.read.usernameemail" in account_session.permissions:
             filtered_profile["username"] = profile["username"]
             filtered_profile["email"] = profile["email"]

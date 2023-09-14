@@ -1,14 +1,11 @@
-import os
 import time
 import uuid
 
-import aiofiles
-from fastapi import Header, Form, UploadFile, status, APIRouter
+from fastapi import Header, Form, status, APIRouter
 from sqlalchemy import delete, select
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import Response
 
-from .consts import async_session, Upload, UploadJSON, ALLOWED_EXTENSIONS, TEST_USERNAME, sessions, \
-    DeveloperNotification
+from .consts import async_session, TEST_USERNAME, sessions, DeveloperNotification
 
 notifications = APIRouter()
 
