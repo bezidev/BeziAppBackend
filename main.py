@@ -251,7 +251,7 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                     classes = untis2324.parse(lines, all_classes, classes_archive, classes, i)
                     continue
 
-                print(f"[SUBSTITUTION PARSER] Parsing using the Untis 2023/2024 format.")
+                print(f"[SUBSTITUTION PARSER] Parsing using the Untis 2023/2024 v2 format.")
                 classes = untis2324v2.parse(lines, all_classes, classes_archive, classes, i)
 
 
