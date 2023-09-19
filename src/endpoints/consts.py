@@ -45,6 +45,11 @@ OAUTH2_VALID_PERMISSIONS = [
     "tarot.contests.delete",
     "notifications.write",
     "notifications.delete",
+    "poker.read",
+    "poker.game.write",
+    "poker.game.delete",
+    "poker.contests.write",
+    "poker.contests.delete",
 ]
 
 class Session:
