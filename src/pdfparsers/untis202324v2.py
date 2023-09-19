@@ -15,7 +15,7 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
             classes[i][n].gimsis_kratko_ime = classes_archive[i][n].kratko_ime
             classes[i][n].gimsis_ime = classes_archive[i][n].ime
 
-            if csv_values[6] != classes[i][n].gimsis_ime:
+            if csv_values[6] not in classes[i][n].gimsis_ime:
                 classes[i][n].opozori = True
             if csv_values[2].lower() not in classes[i][n].profesor.lower():
                 classes[i][n].opozori = True
