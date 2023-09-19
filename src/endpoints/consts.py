@@ -327,6 +327,34 @@ class OAUTH2App(Base):
     modified_on = Column(Float)
 
 
+class PokerResult(Base):
+    __tablename__ = "poker_result"
+    id = Column(String(60), primary_key=True)
+    game_id = Column(String(60))
+    user_id = Column(String(60))
+    money = Column(Integer)
+
+
+class PokerGame(Base):
+    __tablename__ = "poker_game"
+    id = Column(String(60), primary_key=True)
+    contest_id = Column(String(60))
+    initializer = Column(String(60))
+    played_at = Column(Integer)
+
+
+class PokerContest(Base):
+    __tablename__ = 'poker_contest'
+    id = Column(String(60), primary_key=True)
+    contestants = Column(String(1000))
+    name = Column(String(50))
+    description = Column(String(200))
+    minimum_bet = Column(Integer)
+    is_private = Column(Boolean)
+    has_ended = Column(Boolean)
+
+
+
 class UploadJSON:
     def __init__(self, id: str, filename: str, description: str, subject: str, teacher: str, class_name: str, class_year: str, type: str,
                  uploaded_by_me: bool):

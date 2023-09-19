@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from src.endpoints import lopolis, microsoft, notes, tarot, radio, accounts, error_handler, oauth2, notifications
+from src.endpoints import lopolis, microsoft, notes, tarot, radio, accounts, error_handler, oauth2, notifications, poker
 
 api = APIRouter()
 api.include_router(lopolis)
@@ -12,3 +12,4 @@ api.include_router(accounts)
 api.include_router(error_handler)
 api.include_router(oauth2)
 api.include_router(notifications)
+api.include_router(poker)
