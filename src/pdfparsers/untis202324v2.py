@@ -43,6 +43,11 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
             if classes[i][n].vpisano_nadomescanje:
                 print(f"[UNTIS 2023/24 v2] Preskakujem že v GimSIS-u vpisano nadomeščanje {classes[i][n]} {csv_values} {class_match}.")
                 continue
+            if classes[i][n].fixed_by_sharepoint:
+                print(f"[UNTIS 2023/24 v2] Preskakujem že popravljeno nadomeščanje {classes[i][n]} {csv_values} {class_match}.")
+                continue
+
+            print(f"[UNTIS 2023/24 v2] Najdeno nadomeščanje {classes[i][n]} {csv_values} {class_match}.")
 
             # naslednja dva primera dobro obrazložita situacijo:
             # gimsis_ime: ŠVZ-M (Športna vzgoja)
@@ -53,11 +58,16 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
             if not (csv_values[6] in classes[i][n].gimsis_kratko_ime or classes[i][n].gimsis_kratko_ime in csv_values[6]):
                 print(f"[UNTIS 2023/24 v2] Opozarjam uporabnika na napako v urniku {classes[i][n]} {csv_values} {class_match}")
                 classes[i][n].opozori = True
-                # v primeru vaj ne applyjaj sprememb, samo opozori
-                if "vaje" in classes[i][n].gimsis_ime:
-                    continue
+                # ne applyjaj sprememb, samo opozori
+                continue
             if csv_values[2].lower() not in classes[i][n].profesor.lower():
+                print(f"[UNTIS 2023/24 v2] Opozarjam uporabnika na napako v urniku glede profesorja {classes[i][n]} {csv_values} {class_match}")
                 classes[i][n].opozori = True
+                continue
+
+            if classes[i][n].opozori:
+                print(f"[UNTIS 2023/24 v2] Brišem opozorilo {classes[i][n]} {csv_values} {class_match}")
+                classes[i][n].opozori = False
 
             classes[i][n].kratko_ime = csv_values[7]
             classes[i][n].profesor = csv_values[3]
