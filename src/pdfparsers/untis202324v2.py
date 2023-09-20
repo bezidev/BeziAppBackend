@@ -40,6 +40,10 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
             classes[i][n].gimsis_kratko_ime = classes_archive[i][n].kratko_ime
             classes[i][n].gimsis_ime = classes_archive[i][n].ime
 
+            if classes[i][n].vpisano_nadomescanje:
+                print(f"[UNTIS 2023/24 v2] Preskakujem že v GimSIS-u vpisano nadomeščanje {classes[i][n]} {csv_values} {class_match}.")
+                continue
+
             # naslednja dva primera dobro obrazložita situacijo:
             # gimsis_ime: ŠVZ-M (Športna vzgoja)
             # sharepoint ime: ŠVZ-M
