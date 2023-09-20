@@ -67,7 +67,7 @@ async def new_contest(
         response: Response,
         contestants: str = Form(),
         name: str = Form(),
-        description: str = Form(),
+        description: str = Form(""),
         minimum_bid: int = Form(),
         is_private: bool = Form(),
         has_ended: bool = Form(),

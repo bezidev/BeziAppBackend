@@ -15,7 +15,7 @@ notes = APIRouter()
 async def upload_new_note(
         response: Response,
         file: UploadFile,
-        description: str = Form(),
+        description: str = Form(""),
         subject: str = Form(),
         teacher: str = Form(),
         class_name: str = Form(),

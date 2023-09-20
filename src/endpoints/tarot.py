@@ -148,7 +148,7 @@ async def new_contest(
         response: Response,
         contestants: str = Form(),
         name: str = Form(),
-        description: str = Form(),
+        description: str = Form(""),
         is_private: bool = Form(),
         has_ended: bool = Form(),
         authorization: str = Header(),
