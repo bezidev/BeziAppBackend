@@ -15,8 +15,17 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
             classes[i][n].gimsis_kratko_ime = classes_archive[i][n].kratko_ime
             classes[i][n].gimsis_ime = classes_archive[i][n].ime
 
-            if csv_values[6] not in classes[i][n].gimsis_ime:
+            # naslednja dva primera dobro obrazložita situacijo:
+            # gimsis_ime: ŠVZ-M (Športna vzgoja)
+            # sharepoint ime: ŠVZ-M
+            #
+            # gimsis_kratko_ime: FIZv
+            # sharepoint ime: FIZv2
+            if not (csv_values[6] in classes[i][n].gimsis_kratko_ime or classes[i][n].gimsis_kratko_ime in csv_values[6]):
                 classes[i][n].opozori = True
+                # v primeru vaj ne applyjaj sprememb, samo opozori
+                if "vaje" in classes[i][n].gimsis_ime:
+                    continue
             if csv_values[2].lower() not in classes[i][n].profesor.lower():
                 classes[i][n].opozori = True
 
