@@ -22,7 +22,7 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
         try:
             class_match = re.findall(regex_match, csv_values[1])[0]
         except Exception as e:
-            print(f"[UNTIS 2023/24 v2] No match found for {class_level}. {base_class} and regex {regex_match} with {csv_values[1]}: {e}")
+            #print(f"[UNTIS 2023/24 v2] No match found for {class_level}. {base_class} and regex {regex_match} with {csv_values[1]}: {e}")
             continue
         print(f"[UNTIS 2023/24 v2] Match found for {class_level}. {base_class} and regex {regex_match} with {csv_values[1]}: {class_match}")
         if not csv_values[1] in all_classes:
