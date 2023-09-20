@@ -43,9 +43,12 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
             if classes[i][n].vpisano_nadomescanje:
                 print(f"[UNTIS 2023/24 v2] Preskakujem že v GimSIS-u vpisano nadomeščanje {classes[i][n]} {csv_values} {class_match}.")
                 continue
-            if classes[i][n].fixed_by_sharepoint:
-                print(f"[UNTIS 2023/24 v2] Preskakujem že popravljeno nadomeščanje {classes[i][n]} {csv_values} {class_match}.")
-                continue
+            try:
+                if classes[i][n].fixed_by_sharepoint:
+                    print(f"[UNTIS 2023/24 v2] Preskakujem že popravljeno nadomeščanje {classes[i][n]} {csv_values} {class_match}.")
+                    continue
+            except:
+                pass
 
             print(f"[UNTIS 2023/24 v2] Najdeno nadomeščanje {classes[i][n]} {csv_values} {class_match}.")
 
