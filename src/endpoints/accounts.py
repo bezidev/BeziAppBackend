@@ -61,7 +61,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
                 await gimsis.login()
             except Exception as e:
                 response.status_code = status.HTTP_403_FORBIDDEN
-                print(f"[REGISTRATION FAILED] GimSIS error: {e}")
+                print(f"[REGISTRATION] GimSIS session verification failure for user {username} {e}")
                 return {
                     "type": "reg_fail",
                     "data": "GimSIS session verification failed",
@@ -74,6 +74,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
                 salt = bcrypt.gensalt()
                 bcrypt_password = bcrypt.hashpw(password_bytes, salt)
             except Exception as e:
+                print(f"[REGISTRATION] Password encryption failure for user {username} {e}.")
                 response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
                 return {
                     "type": "reg_fail",
@@ -85,6 +86,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
             try:
                 encrypted_gimsis_password = encrypt(password, password)
             except Exception as e:
+                print(f"[REGISTRATION] Password encryption failure for user {username} {e}.")
                 response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
                 return {
                     "type": "reg_fail",
@@ -121,6 +123,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
                 try:
                     await sessions[login_session].login()
                 except Exception as e:
+                    print(f"[REGISTRATION] Session login failure for user {username} {e}.")
                     response.status_code = status.HTTP_403_FORBIDDEN
                     return {
                         "type": "login_fail",
@@ -141,6 +144,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
         user = user[0]
         bcrypt_password = bcrypt.hashpw(password.encode(), user.salt.encode()).decode()
         if bcrypt_password != user.password:
+            print(f"[LOGIN] Password mismatch for user {username}.")
             response.status_code = status.HTTP_403_FORBIDDEN
             return {
                 "type": "login_fail",
@@ -152,6 +156,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
         try:
             gimsis_password = decrypt(user.gimsis_password, password)
         except Exception as e:
+            print(f"[LOGIN] Password decryption failure for user {username} {e}.")
             response.status_code = status.HTTP_409_CONFLICT
             return {
                 "type": "login_fail",
@@ -165,6 +170,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
             if user.lopolis_password != "":
                 lopolis_password = decrypt(user.lopolis_password, password)
         except Exception as e:
+            print(f"[LOGIN] Password decryption failure for user {username} {e}.")
             response.status_code = status.HTTP_409_CONFLICT
             return {
                 "type": "login_fail",
