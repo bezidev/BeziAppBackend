@@ -1,5 +1,30 @@
+import re
+
+
 def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[int, dict], i: int):
     for csv_values in lines:
+        try:
+            for f in all_classes:
+                if len(f) != 2:
+                    continue
+                class_level = int(all_classes[0][0])
+                base_class = all_classes[0][1].upper()
+                break
+        except Exception as e:
+            print(f"[UNTIS 2023/24 v2] Could not obtain class level: {e}, csv_values={csv_values}, skipping")
+            continue
+        #print(f"Found {class_level}. {base_class}")
+
+        try:
+            regex_match = f"{class_level}[A-HŠ]*\.\.|{class_level}[A-HŠ]*{base_class}[A-HŠ]*"
+        except:
+            print(f"[UNTIS 2023/24 v2] Could not find class_level and base_class")
+        try:
+            class_match = re.findall(regex_match, csv_values[1])[0]
+        except Exception as e:
+            print(f"[UNTIS 2023/24 v2] No match found for {class_level}. {base_class} and regex {regex_match} with {csv_values[1]}: {e}")
+            continue
+        print(f"[UNTIS 2023/24 v2] Match found for {class_level}. {base_class} and regex {regex_match} with {csv_values[1]}: {class_match}")
         if not csv_values[1] in all_classes:
             continue
         if " - " in csv_values[0]:
@@ -22,6 +47,7 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
             # gimsis_kratko_ime: FIZv
             # sharepoint ime: FIZv2
             if not (csv_values[6] in classes[i][n].gimsis_kratko_ime or classes[i][n].gimsis_kratko_ime in csv_values[6]):
+                print(f"[UNTIS 2023/24 v2] Opozarjam uporabnika na napako v urniku {classes[i][n]} {csv_values} {class_match}")
                 classes[i][n].opozori = True
                 # v primeru vaj ne applyjaj sprememb, samo opozori
                 if "vaje" in classes[i][n].gimsis_ime:

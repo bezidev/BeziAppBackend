@@ -176,6 +176,8 @@ async def get_timetable(response: Response, date: str | None, authorization: str
             "error": str(e),
         }
 
+    print(f"[INFO] Parsing timetable for user {account_session.username}")
+
     try:
         gradings = await account_session.gimsis_session.fetch_gradings()
     except Exception as e:
