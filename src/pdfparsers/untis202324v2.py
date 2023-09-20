@@ -7,8 +7,8 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
             for f in all_classes:
                 if len(f) != 2:
                     continue
-                class_level = int(all_classes[0][0])
-                base_class = all_classes[0][1].upper()
+                class_level = int(f[0])
+                base_class = f[1].upper()
                 break
         except Exception as e:
             print(f"[UNTIS 2023/24 v2] Could not obtain class level: {e}, csv_values={csv_values}, skipping")
@@ -25,8 +25,6 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
             #print(f"[UNTIS 2023/24 v2] No match found for {class_level}. {base_class} and regex {regex_match} with {csv_values[1]}: {e}")
             continue
         print(f"[UNTIS 2023/24 v2] Match found for {class_level}. {base_class} and regex {regex_match} with {csv_values[1]}: {class_match}")
-        if not csv_values[1] in all_classes:
-            continue
         if " - " in csv_values[0]:
             h = csv_values[0].split(" - ")
             hours = range(int(h[0]), int(h[1]) + 1)
