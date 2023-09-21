@@ -61,7 +61,8 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
                 # Maturitetni predmeti vedno vsebujejo številko letnika, če je pa ne, pa se maturitetni predmeti
                 # pokažejo na nadomeščanjih v obliki 4AB.. (dve pikici na koncu), tako da lahko zanesljivo preskočimo.
                 # Za maturitetne predmete ne potrebujemo opozoril, saj so pretežno false alarmi.
-                if f"{class_level}" in classes[i][n].gimsis_kratko_ime or ".." in csv_values[1]:
+                # Seveda enako velja za športno vzgojo.
+                if f"{class_level}" in classes[i][n].gimsis_kratko_ime or ".." in csv_values[1] or "ŠVZ" in classes[i][n].gimsis_kratko_ime:
                     print(f"[UNTIS 2023/24 v2] Preskakujem maturitetni/kombinirani predmet {classes[i][n]} {csv_values} {class_match}")
                     continue
 
@@ -70,8 +71,9 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
                 # ne applyjaj sprememb, samo opozori
                 continue
             if csv_values[2].lower() not in classes[i][n].profesor.lower():
-                print(f"[UNTIS 2023/24 v2] Opozarjam uporabnika na napako v urniku glede profesorja {classes[i][n]} {csv_values} {class_match}")
-                classes[i][n].opozori = True
+                # Pač oprosti, ampak to pa res ne more biti napaka
+                #print(f"[UNTIS 2023/24 v2] Opozarjam uporabnika na napako v urniku glede profesorja {classes[i][n]} {csv_values} {class_match}")
+                #classes[i][n].opozori = True
                 continue
 
             if classes[i][n].opozori:
