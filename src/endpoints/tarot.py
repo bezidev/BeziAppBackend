@@ -166,10 +166,11 @@ async def new_contest(
 
     async with async_session() as session:
         cs = json.loads(contestants)
-        for i in cs:
+        for k, i in enumerate(cs):
             if len(i.split(".")) != 2:
                 response.status_code = status.HTTP_400_BAD_REQUEST
                 return
+            cs[k] = i.lower()
         if account_session.username not in cs:
             cs.append(account_session.username)
         contest = TarotContest(
@@ -288,6 +289,8 @@ async def add_person(
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
+
+    person.person = person.person.lower()
 
     async with async_session() as session:
         contest = (await session.execute(select(TarotContest).filter(TarotContest.id == id))).first()
