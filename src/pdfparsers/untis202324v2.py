@@ -24,7 +24,7 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
         except Exception as e:
             #print(f"[UNTIS 2023/24 v2] No match found for {class_level}. {base_class} and regex {regex_match} with {csv_values[1]}: {e}")
             continue
-        print(f"[UNTIS 2023/24 v2] Match found for {class_level}. {base_class} and regex {regex_match} with {csv_values[1]}: {class_match}")
+        print(f"[UNTIS 2023/24 v2] Match found for {class_level}{base_class} and regex {regex_match} with {csv_values[1]}: {class_match}")
         if " - " in csv_values[0]:
             h = csv_values[0].split(" - ")
             hours = range(int(h[0]), int(h[1]) + 1)
@@ -57,6 +57,14 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
             # gimsis_kratko_ime: FIZv
             # sharepoint ime: FIZv2
             if not (csv_values[6] in classes[i][n].gimsis_kratko_ime or classes[i][n].gimsis_kratko_ime in csv_values[6]):
+                # Maturitetni predmeti so posebni, saj so takrat skupine kombinirane
+                # Maturitetni predmeti vedno vsebujejo številko letnika, če je pa ne, pa se maturitetni predmeti
+                # pokažejo na nadomeščanjih v obliki 4AB.. (dve pikici na koncu), tako da lahko zanesljivo preskočimo.
+                # Za maturitetne predmete ne potrebujemo opozoril, saj so pretežno false alarmi.
+                if f"{class_level}" in classes[i][n].gimsis_kratko_ime or ".." in csv_values[1]:
+                    print(f"[UNTIS 2023/24 v2] Preskakujem maturitetni/kombinirani predmet {classes[i][n]} {csv_values} {class_match}")
+                    continue
+
                 print(f"[UNTIS 2023/24 v2] Opozarjam uporabnika na napako v urniku {classes[i][n]} {csv_values} {class_match}")
                 classes[i][n].opozori = True
                 # ne applyjaj sprememb, samo opozori
