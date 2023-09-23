@@ -353,7 +353,7 @@ async def get_teachers(response: Response, authorization: str = Header()):
 
 
 @app.get("/grades", status_code=status.HTTP_200_OK)
-async def get_grades(response: Response, authorization: str = Header()):
+async def get_grades(response: Response, year: str | None, authorization: str = Header()):
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
@@ -364,11 +364,16 @@ async def get_grades(response: Response, authorization: str = Header()):
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
-    grades = await account_session.gimsis_session.fetch_grades()
+    year = "" if year is None else year
+    try:
+        grades = await account_session.gimsis_session.fetch_grades(year=year)
+    except Exception as e:
+        await account_session.login()
+        grades = await account_session.gimsis_session.fetch_grades(year=year)
     if len(grades) == 0:
         await account_session.login()
-        grades = await account_session.gimsis_session.fetch_grades()
-    return {"grades": grades}
+        grades = await account_session.gimsis_session.fetch_grades(year=year)
+    return {"grades": grades["grades"], "school_years": grades["school_years"]}
 
 
 @app.get("/user/info", status_code=status.HTTP_200_OK)
