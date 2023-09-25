@@ -74,7 +74,7 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
                 # ne applyjaj sprememb, samo opozori
                 continue
             profesor = csv_values[2].lower().split(" ")[0]
-            if csv_values[2].lower() not in classes[i][n].profesor.lower():
+            if profesor.lower() not in classes[i][n].profesor.lower():
                 # Pač oprosti, ampak to pa res ne more biti napaka
                 print(f"[UNTIS 2023/24 v2] Napaka v urniku glede profesorja {classes[i][n]} {profesor} {class_match}")
                 #classes[i][n].opozori = True
