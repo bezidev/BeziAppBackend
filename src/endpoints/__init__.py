@@ -8,3 +8,4 @@ from .error import *
 from .oauth2 import *
 from .notifications import *
 from .poker import *
+from .palettes import *

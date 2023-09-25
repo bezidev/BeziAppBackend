@@ -359,6 +359,18 @@ class PokerContest(Base):
     has_ended = Column(Boolean)
 
 
+class Palette(Base):
+    __tablename__ = 'palettes'
+    id = Column(String(60), primary_key=True)
+    palette = Column(String(10_000))
+    name = Column(String(50))
+    downloads = Column(Integer)
+    owner = Column(String(100))
+    is_owner_private = Column(Boolean)
+    created_on = Column(Integer)
+
+
+
 
 class UploadJSON:
     def __init__(self, id: str, filename: str, description: str, subject: str, teacher: str, class_name: str, class_year: str, type: str,
