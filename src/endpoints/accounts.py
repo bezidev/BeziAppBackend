@@ -17,6 +17,9 @@ accounts = APIRouter()
 
 @accounts.post("/account/login", status_code=status.HTTP_200_OK)
 async def login(response: Response, username: str = Form(), password: str = Form()):
+    username = username.replace("@gimb.org", "")
+    username = username.replace("@dijaki.gimb.org", "")
+
     print(f"[LOGIN] Prijavljam uporabnika {username} v BežiApp.")
 
     username = username.lower()
