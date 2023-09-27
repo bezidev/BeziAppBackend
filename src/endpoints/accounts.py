@@ -19,6 +19,7 @@ accounts = APIRouter()
 async def login(response: Response, username: str = Form(), password: str = Form()):
     username = username.replace("@gimb.org", "")
     username = username.replace("@dijaki.gimb.org", "")
+    username = username.replace(" ", "")
 
     print(f"[LOGIN] Prijavljam uporabnika {username} v BežiApp.")
 
@@ -199,16 +200,10 @@ async def login(response: Response, username: str = Form(), password: str = Form
         # Trik je v tem, da lahko dostopamo do BežiApp računa tudi, ko nimamo GimSIS-a, če smo se predhodno registrirali z GimSIS-om,
         # zato tega ne preverjamo ob prijavah, ampak to preveri API, ki ga kliče ta oseba **PO** prijavi
         #
-        #try:
-        #    await sessions[login_session].login()
-        #except Exception as e:
-        #    response.status_code = status.HTTP_403_FORBIDDEN
-        #    return {
-        #        "type": "login_fail",
-        #        "data": "Session login failed.",
-        #        "session": None,
-        #        "error": str(e),
-        #    }
+        try:
+            await sessions[login_session].login()
+        except Exception as e:
+            pass
 
         try:
             palette = json.loads(user.palette)
@@ -224,7 +219,15 @@ async def login(response: Response, username: str = Form(), password: str = Form
         }
 
 @accounts.post("/account/password", status_code=status.HTTP_200_OK)
-async def change_password(response: Response, pass_type: str = Form(), current_password: str = Form(), new_password: str = Form(), username: str = Form(""), authorization: str = Header()):
+async def change_password(
+        response: Response,
+        pass_type: str = Form(),
+        current_password: str = Form(),
+        new_password: str = Form(),
+        username: str = Form(""),
+        change_beziapp_password: bool = Form(False),
+        authorization: str = Header(),
+):
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
@@ -278,7 +281,7 @@ async def change_password(response: Response, pass_type: str = Form(), current_p
             user.lopolis_username = username
             del sessions[authorization]
             await session.commit()
-        elif pass_type == "beziapp":
+        if pass_type == "beziapp" or (pass_type == "gimsis" and change_beziapp_password):
             new_bcrypt_password = bcrypt.hashpw(new_password.encode(), user.salt.encode()).decode()
             if user.lopolis_password != "":
                 decrypted_lopolis = decrypt(user.lopolis_password, current_password)
@@ -286,7 +289,10 @@ async def change_password(response: Response, pass_type: str = Form(), current_p
             decrypted_gimsis = decrypt(user.gimsis_password, current_password)
             user.gimsis_password = encrypt(decrypted_gimsis, new_password).decode()
             user.password = new_bcrypt_password
-            del sessions[authorization]
+            try:
+                del sessions[authorization]
+            except:
+                pass
             await session.commit()
         else:
             response.status_code = status.HTTP_400_BAD_REQUEST
