@@ -12,6 +12,7 @@ radio = APIRouter()
 
 RADIO_ADMINS = [
     "mitja.severkar",
+    "dora.sega",
 ]
 
 
