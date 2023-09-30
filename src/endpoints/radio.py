@@ -19,11 +19,19 @@ RADIO_ADMINS = [
 @radio.post("/radio/suggestions", status_code=status.HTTP_201_CREATED)
 async def new_suggestion(
         response: Response,
-        description: str = Form(),
+        description: str = Form(""),
         youtube_id: str = Form(),
         name: str = Form(),
         authorization: str = Header(),
 ):
+    yt = youtube_id.split("&")[0]
+    yt = yt.replace("http://", "")
+    yt = yt.replace("https://", "")
+    yt = yt.replace("www.", "")
+    yt = yt.replace("m.", "")
+    yt = yt.replace("youtube.com/watch?v=", "")
+    yt = yt.replace("youtu.be/", "")
+    print(f"[RADIO] New song submitted {yt} {youtube_id}")
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
@@ -39,7 +47,7 @@ async def new_suggestion(
         id=id,
         username=account_session.username,
         description=description,
-        youtube_id=youtube_id,
+        youtube_id=yt,
         name=name,
         status="WAITING FOR REVIEW",
         reviewed_by="",
