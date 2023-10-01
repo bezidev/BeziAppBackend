@@ -138,6 +138,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
 
                 break
 
+            print(f"[REGISTRATION] Registration for user {username} was successful.")
             return {
                 "type": "reg_login_success",
                 "data": "OK",
@@ -202,13 +203,15 @@ async def login(response: Response, username: str = Form(), password: str = Form
         #
         try:
             await sessions[login_session].login()
-        except Exception as e:
+        except:
             pass
 
         try:
             palette = json.loads(user.palette)
         except:
             palette = []
+
+        print(f"[LOGIN] Successful login for user {username}")
 
         return {
             "type": "login_success",
@@ -233,9 +236,11 @@ async def change_password(
         return
     account_session = sessions[authorization]
     if account_session.oauth2_session:
+        print(f"[ACCOUNT] Denied OAUTH2 session {account_session.username}")
         response.status_code = status.HTTP_403_FORBIDDEN
         return
     if account_session.username == TEST_USERNAME:
+        print(f"[ACCOUNT] Denied changing passwords to test user {account_session.username}")
         response.status_code = status.HTTP_403_FORBIDDEN
         return
     async with async_session() as session:
@@ -247,6 +252,7 @@ async def change_password(
 
         bcrypt_password = bcrypt.hashpw(current_password.encode(), user.salt.encode()).decode()
         if bcrypt_password != user.password:
+            print(f"[ACCOUNT] Password mismatch {account_session.username}")
             response.status_code = status.HTTP_403_FORBIDDEN
             return {
                 "type": "password_verification_fail",
@@ -256,6 +262,7 @@ async def change_password(
             }
 
         if current_password == "" or new_password == "":
+            print(f"[ACCOUNT] Invalid password {account_session.username}")
             response.status_code = status.HTTP_400_BAD_REQUEST
             return {
                 "type": "invalid_password",
@@ -270,6 +277,7 @@ async def change_password(
             await session.commit()
         elif pass_type == "lopolis":
             if username == "":
+                print(f"[ACCOUNT] No Lo.Polis username was provided {account_session.username}")
                 response.status_code = status.HTTP_400_BAD_REQUEST
                 return {
                     "type": "invalid_username",
@@ -295,6 +303,7 @@ async def change_password(
                 pass
             await session.commit()
         else:
+            print(f"[ACCOUNT] Invalid pass_type {pass_type} {account_session.username}")
             response.status_code = status.HTTP_400_BAD_REQUEST
             return {
                 "type": "bad_request",
@@ -303,6 +312,7 @@ async def change_password(
                 "error": None,
             }
 
+        print(f"[ACCOUNT] Successful login information change for {pass_type} with {change_beziapp_password} {account_session.username}")
         return {
             "type": "change_success",
             "data": "OK",
