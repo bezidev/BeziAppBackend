@@ -289,7 +289,7 @@ async def change_password(
             user.lopolis_username = username
             del sessions[authorization]
             await session.commit()
-        if pass_type == "beziapp" or (pass_type == "gimsis" and change_beziapp_password):
+        elif pass_type == "beziapp" or (pass_type == "gimsis" and change_beziapp_password):
             new_bcrypt_password = bcrypt.hashpw(new_password.encode(), user.salt.encode()).decode()
             if user.lopolis_password != "":
                 decrypted_lopolis = decrypt(user.lopolis_password, current_password)
