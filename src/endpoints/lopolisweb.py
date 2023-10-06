@@ -32,9 +32,9 @@ async def get_meals(response: Response, month: str, year: str, authorization: st
             await account_session.login()
             menus = await account_session.lopolis_session.get_menus(year, month)
         except Exception as e:
+            print(f"[LOPOLIS] Error while authorizing {account_session.username} with an error {e}")
             response.status_code = status.HTTP_403_FORBIDDEN
             return {
-                "error": e,
                 "data": "Not authorized using Lo.Polis",
             }
 
@@ -61,9 +61,9 @@ async def set_meals(response: Response, month: str, year: str, authorization: st
             await account_session.login()
             menus = await account_session.lopolis_session.set_menus(year, month, json.loads(lopolis_response))
         except Exception as e:
+            print(f"[LOPOLIS] Error while authorizing {account_session.username} with an error {e}")
             response.status_code = status.HTTP_403_FORBIDDEN
             return {
-                "error": e,
                 "data": "Not authorized using Lo.Polis",
             }
 
@@ -90,9 +90,9 @@ async def get_checkouts(response: Response, month: str, year: str, authorization
             await account_session.login()
             checkouts = await account_session.lopolis_session.get_checkouts(year, month)
         except Exception as e:
+            print(f"[LOPOLIS] Error while authorizing {account_session.username} with an error {e}")
             response.status_code = status.HTTP_403_FORBIDDEN
             return {
-                "error": e,
                 "data": "Not authorized using Lo.Polis",
             }
 
@@ -119,9 +119,9 @@ async def set_checkouts(response: Response, month: str, year: str, authorization
             await account_session.login()
             checkouts = await account_session.lopolis_session.set_checkouts(year, month, json.loads(lopolis_response))
         except Exception as e:
+            print(f"[LOPOLIS] Error while authorizing {account_session.username} with an error {e}")
             response.status_code = status.HTTP_403_FORBIDDEN
             return {
-                "error": e,
                 "data": "Not authorized using Lo.Polis",
             }
 

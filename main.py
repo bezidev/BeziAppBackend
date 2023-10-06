@@ -169,11 +169,11 @@ async def get_timetable(response: Response, date: str | None, authorization: str
             if len(days) == 0:
                 raise Exception("len(days) is 0")
     except Exception as e:
+        print(f"[TIMETABLE] GimSIS login failed: {e}")
         response.status_code = status.HTTP_403_FORBIDDEN
         return {
             "type": "gimsis_login_fail",
             "data": "GimSIS login failed",
-            "error": str(e),
         }
 
     print(f"[INFO] Parsing timetable for user {account_session.username}")

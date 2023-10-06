@@ -70,7 +70,6 @@ async def login(response: Response, username: str = Form(), password: str = Form
                     "type": "reg_fail",
                     "data": "GimSIS session verification failed",
                     "session": None,
-                    "error": str(e),
                 }
 
             try:
@@ -84,7 +83,6 @@ async def login(response: Response, username: str = Form(), password: str = Form
                     "type": "reg_fail",
                     "data": "Password hashing failed. Aborted.",
                     "session": None,
-                    "error": str(e),
                 }
 
             try:
@@ -96,7 +94,6 @@ async def login(response: Response, username: str = Form(), password: str = Form
                     "type": "reg_fail",
                     "data": "Password encryption failed. Aborted.",
                     "session": None,
-                    "error": str(e),
                 }
 
             user = User(
@@ -133,7 +130,6 @@ async def login(response: Response, username: str = Form(), password: str = Form
                         "type": "login_fail",
                         "data": "Session login failed.",
                         "session": None,
-                        "error": str(e),
                     }
 
                 break
@@ -167,7 +163,6 @@ async def login(response: Response, username: str = Form(), password: str = Form
                 "type": "login_fail",
                 "data": "Could not decrypt GimSIS password.",
                 "session": None,
-                "error": str(e),
             }
 
         try:
