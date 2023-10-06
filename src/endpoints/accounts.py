@@ -176,7 +176,6 @@ async def login(response: Response, username: str = Form(), password: str = Form
                 "type": "login_fail",
                 "data": "Could not decrypt Lo.Polis password.",
                 "session": None,
-                "error": str(e),
             }
 
         while True:
