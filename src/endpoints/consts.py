@@ -1,10 +1,12 @@
+import json
 import os
 from typing import List
 
+import aiofiles
 import emoji
 from gimsisapi import GimSisAPI
 from lopolis import LoPolisAPI
-from sqlalchemy import Column, String, Boolean, Integer, Float
+from sqlalchemy import Column, String, Boolean, Integer, Float, JSON
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 
@@ -51,6 +53,7 @@ OAUTH2_VALID_PERMISSIONS = [
     "poker.contests.write",
     "poker.contests.delete",
 ]
+
 
 class Session:
     def __init__(
@@ -179,6 +182,8 @@ class RadioSuggestion(Base):
     username = Column(String(60))
     name = Column(String(100))
     description = Column(String(1000))
+    upvotes = Column(JSON)
+    downvotes = Column(JSON)
     status = Column(String(100))
     reviewed_by = Column(String(60))
     last_status_update = Column(Integer)
@@ -368,7 +373,6 @@ class Palette(Base):
     owner = Column(String(100))
     is_owner_private = Column(Boolean)
     created_on = Column(Integer)
-
 
 
 

@@ -1,6 +1,10 @@
+import copy
+import json
+import os
 import time
 import uuid
 
+import aiofiles
 from fastapi import Header, Form, status, APIRouter
 from sqlalchemy import delete, select
 from fastapi.responses import Response
@@ -8,6 +12,28 @@ from fastapi.responses import Response
 from .consts import async_session, RadioSuggestion, TEST_USERNAME, sessions
 
 radio = APIRouter()
+
+
+CONFIG = {
+    "block_new_radio_suggestions": False,
+    "allow_voting": False,
+}
+
+
+async def write_config():
+    async with aiofiles.open("config.json", "w+") as f:
+        await f.write(json.dumps(CONFIG))
+    await get_config()
+
+async def get_config():
+    global CONFIG
+
+    if not os.path.exists("config.json"):
+        await write_config()
+        return
+    async with aiofiles.open("config.json", "r") as f:
+        CONFIG = json.loads(await f.read())
+        print(CONFIG)
 
 
 RADIO_ADMINS = [
@@ -42,6 +68,10 @@ async def new_suggestion(
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
+    if CONFIG.get("block_new_radio_suggestions") is True:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+
     id = str(uuid.uuid4())
     suggestion = RadioSuggestion(
         id=id,
@@ -54,6 +84,8 @@ async def new_suggestion(
         last_status_update=int(time.time()),
         submitted_on=int(time.time()),
         declined_reason="",
+        upvotes=[account_session.username],
+        downvotes=[],
     )
     async with async_session() as session:
         session.add(suggestion)
@@ -73,8 +105,10 @@ async def get_suggestions(response: Response, authorization: str = Header()):
         response.status_code = status.HTTP_403_FORBIDDEN
         return
     async with async_session() as session:
-        suggestions = (await session.execute(select(RadioSuggestion))).all()
+        suggestions = (await session.execute(select(RadioSuggestion).order_by(RadioSuggestion.submitted_on.asc()))).all()
     suggestions_json = []
+
+    await get_config()
 
     waiting = 0
     approved = 0
@@ -92,8 +126,12 @@ async def get_suggestions(response: Response, authorization: str = Header()):
     for i in suggestions:
         i = i[0]
 
-        if account_session.username not in RADIO_ADMINS and i.username != account_session.username:
+        if CONFIG.get("allow_voting") is not True and account_session.username not in RADIO_ADMINS and i.username != account_session.username and i.status != "WAITING FOR REVIEW":
             continue
+
+        u = i.upvotes
+        d = i.downvotes
+        ups = 1 if account_session.username in u else (-1 if account_session.username in d else 0)
 
         t = {
             "id": i.id,
@@ -106,6 +144,8 @@ async def get_suggestions(response: Response, authorization: str = Header()):
             "submitted_on": i.submitted_on,
             "declined_reason": i.declined_reason,
             "can_delete": account_session.username == i.username,
+            "upvote_count": len(u) - len(d) if CONFIG.get("allow_voting") else 0,
+            "upvote_status": ups if CONFIG.get("allow_voting") else 0,
             "vrsta": "",
         }
 
@@ -118,7 +158,12 @@ async def get_suggestions(response: Response, authorization: str = Header()):
                 t["vrsta"] = f"{waiting}/{waitingTotal}"
 
         suggestions_json.append(t)
-    return suggestions_json
+    return {
+        "suggestions": suggestions_json,
+        "block_new_radio_suggestions": CONFIG.get("block_new_radio_suggestions"),
+        "allow_voting": CONFIG.get("allow_voting"),
+        "is_admin": account_session.username in RADIO_ADMINS,
+    }
 
 
 @radio.delete("/radio/suggestions", status_code=status.HTTP_200_OK)
@@ -179,3 +224,86 @@ async def change_suggestion_status(
         else:
             suggestion.reviewed_by = account_session.username
         await session.commit()
+
+
+@radio.patch("/radio/suggestions/upvote_downvote", status_code=status.HTTP_200_OK)
+async def upvote_downvote_suggestions(
+        response: Response,
+        id: str = Form(),
+        t: str = Form(),
+        authorization: str = Header(),
+):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    account_session = sessions[authorization]
+    if account_session.oauth2_session:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+    if CONFIG.get("allow_voting") is not True:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+
+    async with async_session() as session:
+        suggestion = (await session.execute(select(RadioSuggestion).filter(RadioSuggestion.id == id))).first()
+        suggestion = suggestion[0]
+        if suggestion.status != "WAITING FOR REVIEW":
+            response.status_code = status.HTTP_409_CONFLICT
+            return
+        if t == "upvote":
+            u: list = copy.deepcopy(suggestion.downvotes)
+            if account_session.username in u:
+                u.remove(account_session.username)
+                suggestion.downvotes = u
+
+            k: list = copy.deepcopy(suggestion.upvotes)
+            if account_session.username in k:
+                k.remove(account_session.username)
+            else:
+                k.append(account_session.username)
+            suggestion.upvotes = k
+            print(suggestion.upvotes)
+        elif t == "downvote":
+            u: list = copy.deepcopy(suggestion.upvotes)
+            if account_session.username in u:
+                u.remove(account_session.username)
+                suggestion.upvotes = u
+
+            k: list = copy.deepcopy(suggestion.downvotes)
+            if account_session.username in k:
+                k.remove(account_session.username)
+            else:
+                k.append(account_session.username)
+            suggestion.downvotes = k
+            print(suggestion.downvotes)
+        await session.commit()
+
+
+@radio.patch("/radio/admin/config", status_code=status.HTTP_200_OK)
+async def change_config(
+        response: Response,
+        id: str = Form(),
+        authorization: str = Header(),
+):
+    global CONFIG
+
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    account_session = sessions[authorization]
+    if account_session.oauth2_session:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+    if account_session.username not in RADIO_ADMINS:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+    if not (id == "block_new_radio_suggestions" or id == "allow_voting"):
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+
+    if CONFIG.get(id) is None:
+        CONFIG[id] = False
+    CONFIG[id] = not CONFIG[id]
+    await write_config()
+    return "OK"
+
