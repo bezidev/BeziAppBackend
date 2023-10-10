@@ -1,6 +1,7 @@
 import copy
 import json
 import os
+import re
 import time
 import uuid
 
@@ -50,13 +51,8 @@ async def new_suggestion(
         name: str = Form(),
         authorization: str = Header(),
 ):
-    yt = youtube_id.split("&")[0]
-    yt = yt.replace("http://", "")
-    yt = yt.replace("https://", "")
-    yt = yt.replace("www.", "")
-    yt = yt.replace("m.", "")
-    yt = yt.replace("youtube.com/watch?v=", "")
-    yt = yt.replace("youtu.be/", "")
+    z = re.match(r"(?:[?&]v=|\/embed\/|\/1\/|\/v\/|https:\/\/(?:www\.)?youtu\.be\/)([^&\n?#]+)", youtube_id)
+    yt = z[1]
     print(f"[RADIO] New song submitted {yt} {youtube_id}")
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
