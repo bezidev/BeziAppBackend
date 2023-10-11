@@ -51,8 +51,12 @@ async def new_suggestion(
         name: str = Form(),
         authorization: str = Header(),
 ):
-    z = re.match(r"(?:[?&]v=|\/embed\/|\/1\/|\/v\/|https:\/\/(?:www\.)?youtu\.be\/)([^&\n?#]+)", youtube_id)
-    yt = z[1]
+    print(youtube_id)
+    z = re.search('(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})', youtube_id)
+    if z is None:
+        yt = youtube_id
+    else:
+        yt = z[1]
     print(f"[RADIO] New song submitted {yt} {youtube_id}")
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
