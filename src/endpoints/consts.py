@@ -163,7 +163,7 @@ Base = declarative_base()
 class Upload(Base):
     __tablename__ = 'upload'
     id = Column(String(60), primary_key=True)
-    filename = Column(String(100), unique=True)
+    filename = Column(String(200), unique=False)
     username = Column(String(60))
     description = Column(String(200))
     filepath = Column(String(150))
