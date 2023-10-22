@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import os
+import re
 import time
 
 import aiofiles
@@ -98,8 +99,23 @@ async def get_sharepoint_files(access_token: str):
 
         for file in disk_contents.json()["value"]:
             name = file["name"]
-            print(f"Parsing {name}.")
-            csv_name = f'substitutions/{name.lower().replace(".pdf", ".csv")}'
+            z = re.search("nadome[sš][cč]anje[_ ](3[01]|[12][0-9]|[1-9])\.[ ]*(1[0-2]|[1-9]).*\.pdf", name)
+            if z is None:
+                print(f"[SHAREPOINT] Failure while matching substitutions: {name}")
+                csv_name = f'substitutions/{name.lower().replace(".pdf", ".csv")}'
+            else:
+                try:
+                    dan = int(z[1])
+                    try:
+                        mesec = int(z[2])
+                        csv_name = f'substitutions/nadomescanje_{dan}.{mesec}.csv'
+                    except:
+                        print(f"[SHAREPOINT] Failure while parsing month: {name}")
+                        csv_name = f'substitutions/{name.lower().replace(".pdf", ".csv")}'
+                except:
+                    print(f"[SHAREPOINT] Failure while parsing day: {name}")
+                    csv_name = f'substitutions/{name.lower().replace(".pdf", ".csv")}'
+            print(f"Parsing {name} as {csv_name}.")
             if os.path.exists(csv_name):
                 print("File already exists, deleting.")
                 os.remove(csv_name)

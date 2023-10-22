@@ -204,22 +204,9 @@ async def get_timetable(response: Response, date: str | None, authorization: str
 
         sharepoint_filenames = [
             f"substitutions/nadomeščanje_{day}.csv",
-            f"substitutions/nadomeščanje_{day}..csv",
-            f"substitutions/nadomeščanje_{day}.novo.csv",
-            f"substitutions/nadomeščanje_{day}_intranet.csv",
             f"substitutions/nadomescanje_{day}.csv",
-            f"substitutions/nadomescanje_{day}..csv",
-            f"substitutions/nadomescanje_{day}.novo.csv",
-            f"substitutions/nadomescanje_{day}_intranet.csv",
-
             f"substitutions/nadomeščenje_{day}.csv",
-            f"substitutions/nadomeščenje_{day}..csv",
-            f"substitutions/nadomeščenje_{day}.novo.csv",
-            f"substitutions/nadomeščenje_{day}_intranet.csv",
             f"substitutions/nadomescenje_{day}.csv",
-            f"substitutions/nadomescenje_{day}..csv",
-            f"substitutions/nadomescenje_{day}.novo.csv",
-            f"substitutions/nadomescenje_{day}_intranet.csv",
         ]
         for sharepoint_filename in sharepoint_filenames:
             if not os.path.exists(sharepoint_filename):
