@@ -224,7 +224,7 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                 untis = "2023"
                 for csv_values in lines:
                     tip = csv_values[0]
-                    if tip == "Št.ure":
+                    if tip == "Št.ure" or tip == "Štev.ure":
                         untis = "2024v2"
                     if tip in TIPI_NADOMESCANJ:
                         untis = "2024"
