@@ -99,7 +99,7 @@ async def get_sharepoint_files(access_token: str):
 
         for file in disk_contents.json()["value"]:
             name = file["name"]
-            z = re.search("nadome[sš][cč]anje[_ ](3[01]|[12][0-9]|[1-9])\.[ ]*(1[0-2]|[1-9]).*\.pdf", name)
+            z = re.search("nadome[sš][cč]anj[ea][_ ](3[01]|[12][0-9]|[1-9])\.[ ]*(1[0-2]|[1-9]).*\.pdf", name)
             if z is None:
                 print(f"[SHAREPOINT] Failure while matching substitutions: {name}")
                 csv_name = f'substitutions/{name.lower().replace(".pdf", ".csv")}'
