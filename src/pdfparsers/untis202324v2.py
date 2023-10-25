@@ -5,10 +5,11 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
     for csv_values in lines:
         try:
             for f in all_classes:
-                if len(f) != 2:
+                # seveda obstajajo tudi izjeme, oz. po domače mm, qa, qb
+                if not (len(f) == 2 or (len(f) == 3 and (f == "4MM" or f == "4QA" or f == "4QA" or f == "3MM" or f == "3QA" or f == "3QB" or f == "2QA" or f == "2QB" or f == "1QA" or f == "1QB"))):
                     continue
                 class_level = int(f[0])
-                base_class = f[1].upper()
+                base_class = f[1:].upper()
                 break
         except Exception as e:
             print(f"[UNTIS 2023/24 v2] Could not obtain class level: {e}, csv_values={csv_values}, skipping")
