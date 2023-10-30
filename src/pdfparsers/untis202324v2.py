@@ -82,8 +82,13 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
             profesor = p.replace("-", " ").split(" ")[0]
             if profesor.lower() not in classes[i][n].profesor.lower():
                 # Pač oprosti, ampak to pa res ne more biti napaka
+                #
+                # To je ful neumno narejeno
+                # Retardirano per se
+                # Ampak G-jevci in drugi razredi imajo očitno informatiko deljeno med prof. Šuštaršiča in prof. Železnika.
+                # In to isto uro. Posledično se predmeta čisto ujemata, profesor pa ne.
                 print(f"[UNTIS 2023/24 v2] Napaka v urniku glede profesorja {classes[i][n]} {profesor} {class_match}")
-                classes[i][n].opozori = True
+                #classes[i][n].opozori = True
                 continue
 
             if classes[i][n].opozori:
