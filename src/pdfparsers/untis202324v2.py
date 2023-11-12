@@ -87,8 +87,16 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
                 # Retardirano per se
                 # Ampak G-jevci in drugi razredi imajo očitno informatiko deljeno med prof. Šuštaršiča in prof. Železnika.
                 # In to isto uro. Posledično se predmeta čisto ujemata, profesor pa ne.
+                # Pol pa pride še do tega, da na GIMB-u ne znajo vpisati nadomestnega profesorja v nadomeščanja.
+                # VPISUJEJO JEBENE PROFESORJE, KI SO NA BOLNIŠKI IN JIH 3 JEBENE MESECE NE BO!!!
+                # kaj to pomeni?
+                # DA MAM JST TLE PROBLEME!!!
+
                 print(f"[UNTIS 2023/24 v2] Napaka v urniku glede profesorja {classes[i][n]} {profesor} {class_match}")
-                #classes[i][n].opozori = True
+                if profesor.lower() == "železnik" or profesor.lower() == "šuštaršič":
+                    # pač res, bog ne daj
+                    continue
+                classes[i][n].opozori = True
                 continue
 
             if classes[i][n].opozori:
