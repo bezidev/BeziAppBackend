@@ -38,9 +38,6 @@ app.add_middleware(
 )
 app.include_router(api)
 
-TIPI_NADOMESCANJ = ["Nadomeščanje", "Odpade", "Zaposlitev"]
-
-
 @app.get("/notifications", status_code=status.HTTP_200_OK)
 async def get_my_notifications(response: Response, only_new: bool = False, authorization: str = Header()):
     if authorization == "" or sessions.get(authorization) is None:
