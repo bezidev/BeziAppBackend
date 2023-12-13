@@ -16,7 +16,7 @@ accounts = APIRouter()
 
 
 @accounts.post("/account/login", status_code=status.HTTP_200_OK)
-async def login(response: Response, username: str = Form(), password: str = Form()):
+async def login(response: Response, username: str = Form(), password: str = Form(), force_lopolis: str = Form("false")):
     username = username.replace("@gimb.org", "")
     username = username.replace("@dijaki.gimb.org", "")
     username = username.replace(" ", "")
@@ -169,6 +169,13 @@ async def login(response: Response, username: str = Form(), password: str = Form
             lopolis_password = None
             if user.lopolis_password != "":
                 lopolis_password = decrypt(user.lopolis_password, password)
+            elif force_lopolis == "true":
+                response.status_code = status.HTTP_409_CONFLICT
+                return {
+                    "type": "login_fail",
+                    "data": "No Lo.Polis password is present.",
+                    "session": None,
+                }
         except Exception as e:
             print(f"[LOGIN] Password decryption failure for user {username} {e}.")
             response.status_code = status.HTTP_409_CONFLICT
@@ -197,7 +204,15 @@ async def login(response: Response, username: str = Form(), password: str = Form
         #
         try:
             await sessions[login_session].login()
-        except:
+        except Exception as e:
+            if force_lopolis == "true":
+                print(f"[FORCED LOPOLIS LOGIN] Login failed: {e} {sessions[login_session].lopolis_password} {sessions[login_session].lopolis_username}")
+                response.status_code = status.HTTP_401_UNAUTHORIZED
+                return {
+                    "type": "login_fail",
+                    "data": f"Account login failed.",
+                    "session": None,
+                }
             pass
 
         try:
