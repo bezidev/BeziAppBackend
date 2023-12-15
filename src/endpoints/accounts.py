@@ -206,7 +206,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
             await sessions[login_session].login()
         except Exception as e:
             if force_lopolis == "true":
-                print(f"[FORCED LOPOLIS LOGIN] Login failed: {e} {sessions[login_session].lopolis_password} {sessions[login_session].lopolis_username}")
+                print(f"[FORCED LOPOLIS LOGIN] Login failed: {e} {sessions[login_session].lopolis_username}")
                 response.status_code = status.HTTP_401_UNAUTHORIZED
                 return {
                     "type": "login_fail",
