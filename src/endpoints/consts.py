@@ -4,6 +4,7 @@ from typing import List
 
 import aiofiles
 import emoji
+from Crypto.Util.Padding import pad, unpad
 from gimsisapi import GimSisAPI
 from lopolis import LoPolisAPI
 from sqlalchemy import Column, String, Boolean, Integer, Float, JSON
@@ -102,22 +103,30 @@ def encrypt_key(password: str) -> bytes:
     return hashlib.sha256(password.encode()).digest()
 
 def encrypt(raw, password):
-    raw = _pad(raw)
+    raw = pad(raw, AES.block_size)
     iv = Random.new().read(AES.block_size)
     cipher = AES.new(encrypt_key(password), AES.MODE_CBC, iv)
-    return base64.b64encode(iv + cipher.encrypt(raw.encode()))
+    return base64.b64encode(iv + cipher.encrypt(raw))
 
 def decrypt(enc, password):
     enc = base64.b64decode(enc)
     iv = enc[:AES.block_size]
     cipher = AES.new(encrypt_key(password), AES.MODE_CBC, iv)
-    return _unpad(cipher.decrypt(enc[AES.block_size:])).decode('utf-8')
+    return unpad(cipher.decrypt(enc[AES.block_size:]), AES.block_size).decode('utf-8')
+
+"""
+Legacy code. Not working due to 
+Data must be padded to 16 byte boundary in CBC mode.
+https://stackoverflow.com/questions/75798705/getting-data-must-be-padded-to-16-byte-boundary-in-cbc-mode-when-decrypting-the
+
+Replaced it with the Python Crypto lib pad() and unpad(). It should hopefully not affect the encryption.
 
 def _pad(s):
     return s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * chr(BLOCK_SIZE - len(s) % BLOCK_SIZE)
 
 def _unpad(s):
     return s[:-ord(s[len(s)-1:])]
+"""
 
 
 TEST_USERNAME = "test"
