@@ -19,6 +19,8 @@ accounts = APIRouter()
 async def login(response: Response, username: str = Form(), password: str = Form(), force_lopolis: str = Form("false")):
     username = username.replace("@gimb.org", "")
     username = username.replace("@dijaki.gimb.org", "")
+    username = username.replace("@gimb.si", "")
+    username = username.replace("@dijaki.gimb.si", "")
     username = username.replace(" ", "")
 
     print(f"[LOGIN] Prijavljam uporabnika {username} v BežiApp.")

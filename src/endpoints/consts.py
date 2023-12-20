@@ -102,17 +102,17 @@ BLOCK_SIZE = AES.block_size
 def encrypt_key(password: str) -> bytes:
     return hashlib.sha256(password.encode()).digest()
 
-def encrypt(raw, password):
-    raw = pad(raw, AES.block_size)
-    iv = Random.new().read(AES.block_size)
+def encrypt(raw: str, password: str):
+    raw = pad(raw.encode(), BLOCK_SIZE)
+    iv = Random.new().read(BLOCK_SIZE)
     cipher = AES.new(encrypt_key(password), AES.MODE_CBC, iv)
     return base64.b64encode(iv + cipher.encrypt(raw))
 
-def decrypt(enc, password):
+def decrypt(enc: str, password: str):
     enc = base64.b64decode(enc)
-    iv = enc[:AES.block_size]
+    iv = enc[:BLOCK_SIZE]
     cipher = AES.new(encrypt_key(password), AES.MODE_CBC, iv)
-    return unpad(cipher.decrypt(enc[AES.block_size:]), AES.block_size).decode('utf-8')
+    return unpad(cipher.decrypt(enc[BLOCK_SIZE:]), BLOCK_SIZE).decode('utf-8')
 
 """
 Legacy code. Not working due to 
