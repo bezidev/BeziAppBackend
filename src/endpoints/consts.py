@@ -82,6 +82,8 @@ class Session:
         except Exception as e:
             print(f"[GIMSIS LOGIN] Failed: {e}")
             pass
+
+    async def login_lopolis(self):
         if self.lopolis_username is None or self.lopolis_password is None:
             return
         self.lopolis_session = LoPolisAPI()

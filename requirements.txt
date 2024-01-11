@@ -13,4 +13,4 @@ asyncpg
 bcrypt
 pycryptodome
 emoji
-
+JPype1

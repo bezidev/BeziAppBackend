@@ -29,7 +29,7 @@ async def get_meals(response: Response, month: str, year: str, authorization: st
         menus = await account_session.lopolis_session.get_menus(year, month)
     except:
         try:
-            await account_session.login()
+            await account_session.login_lopolis()
             menus = await account_session.lopolis_session.get_menus(year, month)
         except Exception as e:
             print(f"[LOPOLIS] Error while authorizing {account_session.username} with an error {e}")
@@ -58,7 +58,7 @@ async def set_meals(response: Response, month: str, year: str, authorization: st
         menus = await account_session.lopolis_session.set_menus(year, month, json.loads(lopolis_response))
     except:
         try:
-            await account_session.login()
+            await account_session.login_lopolis()
             menus = await account_session.lopolis_session.set_menus(year, month, json.loads(lopolis_response))
         except Exception as e:
             print(f"[LOPOLIS] Error while authorizing {account_session.username} with an error {e}")
@@ -87,7 +87,7 @@ async def get_checkouts(response: Response, month: str, year: str, authorization
         checkouts = await account_session.lopolis_session.get_checkouts(year, month)
     except:
         try:
-            await account_session.login()
+            await account_session.login_lopolis()
             checkouts = await account_session.lopolis_session.get_checkouts(year, month)
         except Exception as e:
             print(f"[LOPOLIS] Error while authorizing {account_session.username} with an error {e}")
@@ -116,7 +116,7 @@ async def set_checkouts(response: Response, month: str, year: str, authorization
         checkouts = await account_session.lopolis_session.set_checkouts(year, month, json.loads(lopolis_response))
     except:
         try:
-            await account_session.login()
+            await account_session.login_lopolis()
             checkouts = await account_session.lopolis_session.set_checkouts(year, month, json.loads(lopolis_response))
         except Exception as e:
             print(f"[LOPOLIS] Error while authorizing {account_session.username} with an error {e}")

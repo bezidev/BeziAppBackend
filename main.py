@@ -252,6 +252,10 @@ async def get_absences(
                                                                        neopraviceno=neopraviceno, ne_steje=ne_steje,
                                                                        type=type)
 
+    if len(absences) == 0:
+        absences = await account_session.gimsis_session.fetch_absences(from_date, to_date=to_date, ni_obdelano=ni_obdelano, opraviceno=opraviceno, neopraviceno=neopraviceno, ne_steje=ne_steje, type=type)
+        await account_session.login()
+
     return {"absences": absences, "type": type}
 
 
