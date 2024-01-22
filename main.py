@@ -51,7 +51,7 @@ async def get_my_notifications(response: Response, only_new: bool = False, autho
     seen_notifications = []
     expired_notifications = []
     async with async_session() as session:
-        db_objects = (await session.execute(select(SharepointNotification))).all()
+        db_objects = (await session.execute(select(SharepointNotification).order_by(SharepointNotification.modified_on))).all()
         for notification in db_objects:
             notification = notification[0]
             if notification.expires_on < time.time():
