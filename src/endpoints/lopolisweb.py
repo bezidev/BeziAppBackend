@@ -1,9 +1,6 @@
-import base64
 import json
-import os
 
 from fastapi import Header, Form, APIRouter
-from lopolis import LoPolisAPI
 from fastapi import status
 from fastapi.responses import Response
 
