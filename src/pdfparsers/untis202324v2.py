@@ -39,6 +39,17 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
             classes[i][n].gimsis_kratko_ime = classes_archive[i][n].kratko_ime
             classes[i][n].gimsis_ime = classes_archive[i][n].ime
 
+            # menjavo ure vpišemo ne glede na to ali je ura že vpisana v gumsisu
+            p = re.search(r"nam[.]? ([1-9]). ure", csv_values[8], re.IGNORECASE)
+            if p:
+                try:
+                    ura = int(p.group(1))
+                    classes[i][ura].odpade = True
+                    classes[i][ura].implicitno_odpade = True
+                    print(f"[UNTIS 2023/24 v2] Applied implicit hour: {csv_values[8]}")
+                except Exception as e:
+                    print(f"[UNTIS 2023/24 v2] Failure while applying replaced hour: {e}")
+
             if classes[i][n].vpisano_nadomescanje:
                 print(f"[UNTIS 2023/24 v2] Preskakujem že v GimSIS-u vpisano nadomeščanje {classes[i][n]} {csv_values} {class_match}.")
                 continue
@@ -91,21 +102,33 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
                 # VPISUJEJO JEBENE PROFESORJE, KI SO NA BOLNIŠKI IN JIH 3 JEBENE MESECE NE BO!!!
                 # kaj to pomeni?
                 # DA MAM JST TLE PROBLEME!!!
+                # EDIT: tudi športna si zasluži skip
 
-                print(f"[UNTIS 2023/24 v2] Napaka v urniku glede profesorja {classes[i][n]} {profesor} {class_match}")
                 if profesor.lower() == "železnik" or profesor.lower() == "šuštaršič":
                     # pač res, bog ne daj
                     continue
+                if "ŠVZ" in classes[i][n].gimsis_kratko_ime:
+                    continue
+
+                print(f"[UNTIS 2023/24 v2] Napaka v urniku glede profesorja {classes[i][n]} {profesor} {class_match}")
                 classes[i][n].opozori = True
                 continue
 
+            # koji kurac?
+            # Kok zadet sem bil, ko sem to pisal
+            # Anyhow, če dela, dela
             if classes[i][n].opozori:
                 print(f"[UNTIS 2023/24 v2] Brišem opozorilo {classes[i][n]} {csv_values} {class_match}")
                 classes[i][n].opozori = False
 
+            classes[i][n].odpade = "---" in csv_values[3]
+
+            if classes[i][n].odpade:
+                classes[i][n].fixed_by_sharepoint = True
+                continue
+
             classes[i][n].kratko_ime = csv_values[7]
             classes[i][n].profesor = csv_values[3]
-            classes[i][n].odpade = "---" in classes[i][n].profesor
 
             try:
                 classes[i][n].ucilnica = f"Učilnica {int(csv_values[5])}"
@@ -116,10 +139,12 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
                 classes[i][n].ime = csv_values[7]
 
             classes[i][n].opis = csv_values[8]
+
             try:
                 classes[i][n].tip_izostanka = csv_values[9]
             except:
                 classes[i][n].tip_izostanka = "Tip izostanka ni dan"
+
             classes[i][n].fixed_by_sharepoint = True
 
     return classes
