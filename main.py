@@ -196,12 +196,6 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                     classes[i][n].ocenjevanje = True
                     classes[i][n].ocenjevanje_details = grading
 
-    if "08.02." in days:
-        classes[4][1] = GimSisUra(1, 4, "RU (Razredna ura)", "RU", "" if len(all_classes) == 0 else all_classes[0], "???", "???",
-                                  False, False)
-        classes[4][1].opis = "Glejte intranet. Verjetno je tudi 6. ura razredna, samo ne morem potrditi zaradi skopih informacij."
-        classes[4][1].rocno = True
-
     for i, day in enumerate(sharepoint_days):
         for n in classes[i].keys():
             classes[i][n].opozori = None
