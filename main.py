@@ -187,6 +187,7 @@ async def get_timetable(response: Response, date: str | None, authorization: str
         analytics.clear()
         analytics["reset"] = current.day
     if analytics.get(account_session.username) is None:
+        print(f"[ANALYTICS DEBUG] Dodajam v analitiko: {current.day} {analytics['reset']}")
         analytics[account_session.username] = 0
     analytics[account_session.username] += 1
 
