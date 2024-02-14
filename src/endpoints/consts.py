@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 from typing import List
@@ -91,6 +92,9 @@ class Session:
 
 
 sessions: dict[str, Session] = {}
+analytics: dict[str, int] = {
+    "reset": datetime.datetime.now().day,
+}
 gimsis_sessions: dict[str, GimSisAPI] = {}
 lopolis_sessions: dict[str, LoPolisAPI] = {}
 

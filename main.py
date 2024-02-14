@@ -14,7 +14,7 @@ import aiofiles as aiofiles
 from fastapi import status, Header, Response, FastAPI
 from fastapi.responses import StreamingResponse
 from ics import Calendar, Event
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from gimsisapi import GimSisAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,7 +22,7 @@ from sqlalchemy import select
 
 from routes.api import api
 
-from src.endpoints.consts import engine, Base, TEST_USERNAME, async_session, SharepointNotification, sessions
+from src.endpoints.consts import engine, Base, TEST_USERNAME, async_session, SharepointNotification, sessions, analytics
 from src.endpoints.microsoft import translate_days_into_sharepoint, find_base_class, background_sharepoint_job
 from src.pdfparsers import select_parser
 
@@ -174,7 +174,21 @@ async def get_timetable(response: Response, date: str | None, authorization: str
             "data": "GimSIS login failed",
         }
 
-    print(f"[INFO] Parsing timetable for user {account_session.username}")
+    current = datetime.now()
+    if current.day != analytics["reset"]:
+        prev = current - timedelta(days=1)
+        print("[ANALITIKA] ----------------------------------------------")
+        print("[ANALITIKA] BežiApp analitika")
+        print(f"[ANALITIKA] Analitika izpisana ob {current.minute}.{current.hour} na dan {prev.day}. {prev.month}. {prev.year}")
+        print(f"[ANALITIKA] Dan: {prev.day}. {prev.month}. {prev.year}")
+        print(f"[ANALITIKA] Število edinstvenih obiskovalcev: {len(analytics.keys())}")
+        print(f"[ANALITIKA] Obiskovalci: {analytics}")
+        print("[ANALITIKA] ----------------------------------------------")
+        analytics.clear()
+        analytics["reset"] = current.day
+    if analytics.get(account_session.username) is None:
+        analytics[account_session.username] = 0
+    analytics[account_session.username] += 1
 
     try:
         gradings = await account_session.gimsis_session.fetch_gradings()
@@ -186,6 +200,10 @@ async def get_timetable(response: Response, date: str | None, authorization: str
 
     sharepoint_days = translate_days_into_sharepoint(days)
     all_classes = find_base_class(classes)
+
+    e = "" if len(all_classes) == 0 else all_classes[0]
+
+    print(f"[INFO] Parsing timetable for user {account_session.username} {e}")
 
     for i, day in enumerate(days):
         for grading in gradings:
