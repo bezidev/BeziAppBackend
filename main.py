@@ -183,7 +183,7 @@ async def get_timetable(response: Response, date: str | None, authorization: str
         print(f"[ANALITIKA] Dan: {prev.day}. {prev.month}. {prev.year}")
         print(f"[ANALITIKA] Število edinstvenih obiskovalcev: {len(analytics.keys())}")
         print(f"[ANALITIKA] Obiskovalci: {analytics}")
-        print("[ANALITIKA] ----------------------------------------------")
+        print("----------------------------------------------")
         analytics.clear()
         analytics["reset"] = current.day
     if analytics.get(account_session.username) is None:
