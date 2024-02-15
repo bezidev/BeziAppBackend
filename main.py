@@ -181,7 +181,7 @@ async def get_timetable(response: Response, date: str | None, authorization: str
         print("[ANALITIKA] BežiApp analitika")
         print(f"[ANALITIKA] Analitika izpisana ob {current.minute}.{current.hour} na dan {prev.day}. {prev.month}. {prev.year}")
         print(f"[ANALITIKA] Dan: {prev.day}. {prev.month}. {prev.year}")
-        print(f"[ANALITIKA] Število edinstvenih obiskovalcev: {len(analytics.keys())}")
+        print(f"[ANALITIKA] Število edinstvenih obiskovalcev: {len(analytics.keys()) - 1}")
         print(f"[ANALITIKA] Obiskovalci: {analytics}")
         print("----------------------------------------------")
         analytics.clear()
