@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN ringo_url VARCHAR(5000) DEFAULT '';

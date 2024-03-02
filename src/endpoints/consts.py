@@ -64,6 +64,7 @@ class Session:
             gimsis_password: str,
             lopolis_username: str | None,
             lopolis_password: str | None,
+            ringo_url: str | None,
             oauth2_session: bool = False,
             permissions: List[str] | None = None,
     ):
@@ -76,6 +77,7 @@ class Session:
         self.gimsis_session = GimSisAPI(username, gimsis_password)
         self.oauth2_session = oauth2_session
         self.permissions = permissions
+        self.ringo_url = ringo_url
 
     async def login(self):
         try:
@@ -337,6 +339,7 @@ class User(Base):
     gimsis_password = Column(String(1000))
     lopolis_username = Column(String(1000))
     lopolis_password = Column(String(1000))
+    ringo_url = Column(String(1000))
     palette = Column(String(5000))
 
 

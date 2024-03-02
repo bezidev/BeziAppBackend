@@ -6,8 +6,9 @@ aiofiles
 pydantic
 python-multipart
 ics
-git+https://github.com/mytja/gimsisapi
-git+https://github.com/mytja/lopolis-api
+git+https://github.com/bezidev/gimsisapi
+git+https://github.com/bezidev/lopolis-api
+git+https://github.com/bezidev/RingoAPI
 sqlalchemy
 asyncpg
 bcrypt

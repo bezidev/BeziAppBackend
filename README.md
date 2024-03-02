@@ -8,7 +8,7 @@ A backend for BežiApp, an alternative and complete solution for Gimnazija Beži
 - [x] Integration with Lo.Polis - fetch & change meals and checkouts
 - [x] Examination (test) and note upload
 - [x] School radio
-- [x] Tarock/tarot counting software
+- [x] Tarock counting software
 - [x] OAUTH2 integration
 - [x] BežiApp account system
 

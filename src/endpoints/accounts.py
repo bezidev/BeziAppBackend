@@ -47,6 +47,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
                 lopolis_password=None,
                 oauth2_session=False,
                 permissions=None,
+                ringo_url=None,
             )
             break
         return {
@@ -106,6 +107,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
                 lopolis_username="",
                 lopolis_password="",
                 palette="[]",
+                ringo_url="",
             )
 
             session.add(user)
@@ -122,6 +124,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
                     lopolis_password=None,
                     oauth2_session=False,
                     permissions=None,
+                    ringo_url="",
                 )
                 try:
                     await sessions[login_session].login()
@@ -187,6 +190,21 @@ async def login(response: Response, username: str = Form(), password: str = Form
                 "session": None,
             }
 
+        try:
+            ringo_url = None
+            if user.ringo_url == "DEFAULT_TOKEN":
+                ringo_url = os.environ.get("RINGO_TOKEN")
+            elif user.ringo_url != "":
+                ringo_url = decrypt(user.ringo_url, password)
+        except Exception as e:
+            print(f"[LOGIN] Password decryption failure for user {username} {e}.")
+            response.status_code = status.HTTP_409_CONFLICT
+            return {
+                "type": "login_fail",
+                "data": "Could not decrypt Lo.Polis password.",
+                "session": None,
+            }
+
         while True:
             login_session = base64.b64encode(os.urandom(64)).decode()
             if sessions.get(login_session) is not None:
@@ -198,6 +216,7 @@ async def login(response: Response, username: str = Form(), password: str = Form
                 lopolis_password=lopolis_password,
                 oauth2_session=False,
                 permissions=None,
+                ringo_url=ringo_url,
             )
             break
 
@@ -305,6 +324,9 @@ async def change_password(
             if user.lopolis_password != "":
                 decrypted_lopolis = decrypt(user.lopolis_password, current_password)
                 user.lopolis_password = encrypt(decrypted_lopolis, new_password).decode()
+            if user.ringo_url != "":
+                decrypted_ringo = decrypt(user.ringo_url, current_password)
+                user.ringo_url = encrypt(decrypted_ringo, new_password).decode()
             decrypted_gimsis = decrypt(user.gimsis_password, current_password)
             user.gimsis_password = encrypt(decrypted_gimsis, new_password).decode()
             user.password = new_bcrypt_password

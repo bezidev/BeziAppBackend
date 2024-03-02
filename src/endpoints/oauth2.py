@@ -68,6 +68,7 @@ async def oauth2_login(
                 lopolis_password=account_session.lopolis_password,
                 oauth2_session=True,
                 permissions=scope,
+                ringo_url=None,
             )
             break
 
