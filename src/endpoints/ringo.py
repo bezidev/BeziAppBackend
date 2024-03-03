@@ -107,7 +107,7 @@ async def change_ringo_url(response: Response, ringo_url: str = Form(), current_
 
         if ringo_url == "DEFAULT_TOKEN":
             user.ringo_url = "DEFAULT_TOKEN"
-            sessions[authorization].ringo_url = os.environ.get("RINGO_TOKEN")
+            sessions[authorization].ringo_url = None
         else:
             user.ringo_url = encrypt(ringo_url, current_password).decode()
             sessions[authorization].ringo_url = ringo_url
@@ -141,11 +141,13 @@ async def open_door(response: Response, door_id: int, authorization: str = Heade
         response.status_code = status.HTTP_403_FORBIDDEN
         return
 
-    # Če nima izbire, defaultaj na defaultni Ringo URL
-    if account_session.ringo_url is None:
-        account_session.ringo_url = os.environ.get("RINGO_TOKEN")
+    url = account_session.ringo_url
 
-    r = RingoAPI(account_session.ringo_url)
+    # Če nima izbire, defaultaj na defaultni Ringo URL
+    if url is None:
+        url = os.environ.get("RINGO_TOKEN")
+
+    r = RingoAPI(url)
 
     if door_id == 0:
         #r.unlock_door()
