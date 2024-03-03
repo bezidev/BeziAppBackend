@@ -192,7 +192,9 @@ async def login(response: Response, username: str = Form(), password: str = Form
 
         try:
             ringo_url = None
-            if user.ringo_url != "DEFAULT_TOKEN" and user.ringo_url != "":
+            if user.ringo_url == "DEFAULT_TOKEN":
+                ringo_url = "DEFAULT_TOKEN"
+            elif user.ringo_url != "":
                 ringo_url = decrypt(user.ringo_url, password)
         except Exception as e:
             print(f"[LOGIN] Password decryption failure for user {username} {e}.")
