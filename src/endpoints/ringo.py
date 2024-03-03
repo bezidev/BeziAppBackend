@@ -1,4 +1,8 @@
+import datetime
 import os
+import time
+
+import aiofiles
 import bcrypt
 
 from fastapi import APIRouter, Header, Form
@@ -145,6 +149,8 @@ async def open_door(response: Response, door_id: int, authorization: str = Heade
 
     # Če nima izbire, defaultaj na defaultni Ringo URL
     if url is None or url == "DEFAULT_TOKEN":
+        async with aiofiles.open("doors.log", "w") as f:
+            await f.write(f"[RINGO] Vstop s skupnim ključem s strani {account_session.username} ob {datetime.datetime.now().strftime('%d/%m/%Y, %H:%M:%S')}.\n")
         url = os.environ.get("RINGO_TOKEN")
 
     r = RingoAPI(url)
