@@ -68,7 +68,6 @@ async def change_ringo_url(response: Response, ringo_url: str = Form(), current_
         return {
             "type": "invalid_data",
             "data": "Invalid data.",
-            "session": None,
             "error": "Either current_password or ringo_url is empty.",
         }
 
@@ -81,7 +80,6 @@ async def change_ringo_url(response: Response, ringo_url: str = Form(), current_
         return {
             "type": "invalid_url",
             "data": "Invalid URL.",
-            "session": None,
             "error": "SSRF check failed.",
         }
 
@@ -92,7 +90,6 @@ async def change_ringo_url(response: Response, ringo_url: str = Form(), current_
             return {
                 "type": "no_such_user",
                 "data": "No such user.",
-                "session": None,
                 "error": "Could not find such a user in the database.",
             }
         user = user[0]
@@ -105,7 +102,6 @@ async def change_ringo_url(response: Response, ringo_url: str = Form(), current_
                 return {
                     "type": "password_verification_fail",
                     "data": "Invalid password.",
-                    "session": None,
                     "error": "Password mismatch.",
                 }
 
@@ -122,7 +118,6 @@ async def change_ringo_url(response: Response, ringo_url: str = Form(), current_
         return {
             "type": "change_success",
             "data": "OK",
-            "session": None,
             "error": None,
         }
 
@@ -147,6 +142,14 @@ async def open_door(response: Response, door_id: int, authorization: str = Heade
 
     url = account_session.ringo_url
 
+    if not (door_id == 0 or door_id == 1):
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {
+            "type": "invalid_door_id",
+            "data": "Invalid door_id.",
+            "error": "door_id must be either 0 or 1.",
+        }
+
     # Če nima izbire, defaultaj na defaultni Ringo URL
     if url is None or url == "DEFAULT_TOKEN":
         async with aiofiles.open("doors.log", "a") as f:
@@ -155,17 +158,28 @@ async def open_door(response: Response, door_id: int, authorization: str = Heade
 
     r = RingoAPI(url)
 
-    if door_id == 0:
-        #r.unlock_door()
-        pass
-    elif door_id == 1:
-        #r.unlock_door()
-        pass
-    else:
-        response.status_code = status.HTTP_400_BAD_REQUEST
+    try:
+        res = await r.unlock_door(311 if door_id == 0 else 296, 1)
+    except Exception as e:
+        print(f"[RINGO OPEN] Error: {account_session.username}, {account_session.ringo_url}, {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {
-            "type": "invalid_door_id",
-            "data": "Invalid door_id.",
-            "session": None,
-            "error": "door_id must be either 0 or 1.",
+            "type": "ringo_api_failure",
+            "data": "Failure while calling the Ringo API.",
+            "error": None,
         }
+
+    if res["status"] == 200:
+        response.status_code = status.HTTP_200_OK
+        return {
+            "type": "door_open_success",
+            "data": "Successfully opened the door.",
+            "error": None,
+        }
+
+    response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return {
+        "type": "door_open_failure",
+        "data": "Failure while opening the door.",
+        "error": res,
+    }
