@@ -51,6 +51,10 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
                     print(f"[UNTIS 2023/24 v2] Failure while applying replaced hour: {e}")
 
             if classes[i][n].vpisano_nadomescanje:
+                # Če je nadomeščanje že vpisano v gimsisu, potem ta ura ne more biti odpadla
+                # Right?
+                classes[i][n].odpade = False
+                classes[i][n].implicitno_odpade = False
                 print(f"[UNTIS 2023/24 v2] Preskakujem že v GimSIS-u vpisano nadomeščanje {classes[i][n]} {csv_values} {class_match}.")
                 continue
             try:
@@ -123,9 +127,30 @@ def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[in
 
             classes[i][n].odpade = "---" in csv_values[3]
 
+            # Tole se ne triggera pri implicitnih urah [needs reverification]
             if classes[i][n].odpade:
                 classes[i][n].fixed_by_sharepoint = True
                 continue
+
+            # Če pridemo do sem, lahko rečemo, da implicitna ura ne odpade
+            # Primer:
+            # nam. 4. ure; 3. ura; Ovsenik -> Markun; NEM -> MAT
+            # nam. 1. ure; 4. ura; Markun -> Lazarini; MAT -> GEO
+            # Primer nespremenjenega urnika, da bo sploh imela kaj smisel:
+            # 1. GEO
+            # 2. PSI
+            # 3. NEM
+            # 4. MAT
+            # 5. ZGO
+            # ...
+            # Prvo se označi 4. ura kot implicitno odpadla, saj je matematičarka zamenjala uro z nemcistko
+            # Nato pa probamo spremeniti implicitno odpadlo v neko uro, saj je geografinja šla malo bolj gor po urniku
+            # Zdaj označimo še 1. uro kot implicitno odpadlo, medtem ko je 4. ura še vedno implicitno označena.
+            # To ni v redu, zato tukaj to.
+            #
+            # Naši urniki so na desetih dimenzijah razmišljanja ffs
+            classes[i][n].odpade = False
+            classes[i][n].implicitno_odpade = False
 
             classes[i][n].kratko_ime = csv_values[7]
             classes[i][n].profesor = csv_values[3]
