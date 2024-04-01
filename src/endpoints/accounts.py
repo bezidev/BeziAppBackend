@@ -1,6 +1,10 @@
 import base64
 import json
 import os
+import random
+import string
+import time
+
 import bcrypt
 
 from fastapi import APIRouter, Header, Form
@@ -11,6 +15,7 @@ from starlette.responses import Response
 
 from src.endpoints import async_session
 from src.endpoints.consts import User, encrypt, decrypt, sessions, Session, TEST_USERNAME, TEST_PASSWORD
+from src.smtp.smtp import password_reset_email, password_reset_notification_email
 
 accounts = APIRouter()
 
@@ -108,6 +113,8 @@ async def login(response: Response, username: str = Form(), password: str = Form
                 lopolis_password="",
                 palette="[]",
                 ringo_url="",
+                last_email_sent=0,
+                reset_token="",
             )
 
             session.add(user)
@@ -346,7 +353,8 @@ async def change_password(
                 "error": None,
             }
 
-        print(f"[ACCOUNT] Successful login information change for {pass_type} with {change_beziapp_password} {account_session.username}")
+        print(
+            f"[ACCOUNT] Successful login information change for {pass_type} with {change_beziapp_password} {account_session.username}")
         return {
             "type": "change_success",
             "data": "OK",
@@ -367,7 +375,6 @@ async def get_palette(response: Response, authorization: str = Header()):
     if account_session.username == TEST_USERNAME:
         response.status_code = status.HTTP_403_FORBIDDEN
         return
-
 
     async with async_session() as session:
         user = (await session.execute(select(User).filter_by(username=account_session.username))).first()
@@ -398,7 +405,6 @@ async def update_palette(response: Response, palette: str = Form(), authorizatio
         response.status_code = status.HTTP_403_FORBIDDEN
         return
 
-
     async with async_session() as session:
         user = (await session.execute(select(User).filter_by(username=account_session.username))).first()
         if user is None or user[0] is None:
@@ -418,3 +424,119 @@ async def update_palette(response: Response, palette: str = Form(), authorizatio
 
         return "OK"
 
+
+@accounts.post("/account/reset_email", status_code=status.HTTP_200_OK)
+async def reset_email(response: Response, username: str = Form()):
+    username = username.replace("@gimb.org", "")
+    username = username.replace("@dijaki.gimb.org", "")
+    username = username.replace("@gimb.si", "")
+    username = username.replace("@dijaki.gimb.si", "")
+    username = username.replace(" ", "")
+
+    print(f"[RESET] Requesting account reset email for user {username}")
+
+    if username == "test":
+        return
+
+    async with async_session() as session:
+        user = (await session.execute(select(User).filter_by(username=username))).first()
+        if user is None or user[0] is None:
+            return
+        user = user[0]
+        if user.last_email_sent + 5 * 60 >= time.time():
+            return
+
+        user.reset_token = ''.join(
+            random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in
+            range(50))
+        user.last_email_sent = time.time()
+        await session.commit()
+
+        password_reset_email(username, user.reset_token)
+
+
+@accounts.post("/account/reset_account", status_code=status.HTTP_200_OK)
+async def reset_account(response: Response, username: str = Form(), password: str = Form(), reset_token: str = Form()):
+    username = username.replace("@gimb.org", "")
+    username = username.replace("@dijaki.gimb.org", "")
+    username = username.replace("@gimb.si", "")
+    username = username.replace("@dijaki.gimb.si", "")
+    username = username.replace(" ", "")
+
+    print(f"[RESET] Resetting account of user {username}")
+
+    if username == "test":
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return
+
+    if reset_token == "" or password == "" or username == "":
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+
+    async with async_session() as session:
+        user = (await session.execute(select(User).filter_by(username=username))).first()
+        if user is None or user[0] is None:
+            response.status_code = status.HTTP_403_FORBIDDEN
+            return
+        user = user[0]
+        if user.reset_token != reset_token:
+            response.status_code = status.HTTP_403_FORBIDDEN
+            return
+        if (user.last_email_sent + 60 * 60 * 24) < time.time():
+            response.status_code = status.HTTP_403_FORBIDDEN
+            return
+
+        gimsis = GimSisAPI(username, password)
+
+        try:
+            await gimsis.login()
+        except Exception as e:
+            response.status_code = status.HTTP_409_CONFLICT
+            print(f"[RESET] GimSIS session verification failure for user {username} {e}")
+            return {
+                "type": "gimsis_auth_fail",
+                "data": "GimSIS session verification failed",
+                "session": None,
+            }
+
+        try:
+            password_bytes = password.encode('utf-8')
+            salt = bcrypt.gensalt()
+            bcrypt_password = bcrypt.hashpw(password_bytes, salt)
+        except Exception as e:
+            print(f"[RESET] Password encryption failure for user {username} {e}.")
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {
+                "type": "reg_fail",
+                "data": "Password hashing failed. Aborted.",
+                "session": None,
+            }
+
+        try:
+            encrypted_gimsis_password = encrypt(password, password)
+        except Exception as e:
+            print(f"[REGISTRATION] Password encryption failure for user {username} {e}.")
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {
+                "type": "reg_fail",
+                "data": "Password encryption failed. Aborted.",
+                "session": None,
+            }
+
+        user.lopolis_password = ""
+        user.lopolis_username = ""
+        user.ringo_url = ""
+        user.gimsis_password = encrypted_gimsis_password.decode("utf-8")
+        user.salt = salt.decode("utf-8")
+        user.password = bcrypt_password.decode("utf-8")
+        user.reset_token = ""
+
+        await session.commit()
+
+        password_reset_notification_email(username)
+
+        return {
+            "type": "ok",
+            "data": "OK",
+            "session": None,
+        }

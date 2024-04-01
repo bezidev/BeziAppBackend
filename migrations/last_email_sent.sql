@@ -1,0 +1,3 @@
+ALTER TABLE "user" ADD COLUMN last_email_sent INTEGER DEFAULT 0;
+ALTER TABLE "user" ADD COLUMN reset_token VARCHAR(200) DEFAULT '';
+

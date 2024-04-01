@@ -341,6 +341,8 @@ class User(Base):
     lopolis_password = Column(String(1000))
     ringo_url = Column(String(1000))
     palette = Column(String(5000))
+    last_email_sent = Column(Integer)
+    reset_token = Column(String(200))
 
 
 class OAUTH2App(Base):
