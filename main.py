@@ -293,6 +293,8 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                     classes[i][h].stara_ucilnica = classes[i][h].ucilnica
                     classes[i][h].ucilnica = uc
 
+                    print(f"[SELITVE 2024 IMPLEMENTER] Implementirana selitev {classes[i][h].stara_ucilnica} -> {classes[i][h].ucilnica} za {line[1]}.")
+
     return {"classes": classes, "days": days, "sharepoint_days": sharepoint_days}
 
 
