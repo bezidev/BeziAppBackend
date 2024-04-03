@@ -24,6 +24,7 @@ from routes.api import api
 
 from src.endpoints.consts import engine, Base, TEST_USERNAME, async_session, SharepointNotification, sessions, analytics
 from src.endpoints.microsoft import translate_days_into_sharepoint, find_base_class, background_sharepoint_job
+from src.helpers.classes import parse_base_class, match_class
 from src.pdfparsers import select_parser
 
 app = FastAPI()
@@ -220,11 +221,12 @@ async def get_timetable(response: Response, date: str | None, authorization: str
             classes[i][n].opozori = None
 
         sharepoint_filenames = [
-            f"substitutions/nadomeščanje_{day}.csv",
             f"substitutions/nadomescanje_{day}.csv",
-            f"substitutions/nadomeščenje_{day}.csv",
-            f"substitutions/nadomescenje_{day}.csv",
         ]
+        migrations_filenames = [
+            f"substitutions/selitve_{day}.csv",
+        ]
+
         for sharepoint_filename in sharepoint_filenames:
             if not os.path.exists(sharepoint_filename):
                 #print(f"[SHAREPOINT] Could not find a file {sharepoint_filename}")
@@ -238,6 +240,58 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                     classes = temppdf.parse(lines, all_classes, classes_archive, classes, i)
                     continue
                 classes = select_parser(lines, all_classes, classes_archive, classes, i)
+
+        # Paralelepiped povozi nadomeščanja, ker "Modul za nadomeščanja" ni tako kul ime :))))))))))))
+        for migration_filename in migrations_filenames:
+            if not os.path.exists(migration_filename):
+                continue
+            async with aiofiles.open(migration_filename, "r") as f:
+                print(f"[SELITVE 2024 IMPLEMENTER] File {migration_filename} exists.")
+                ls = await f.readlines()
+                lines = csv.reader(ls, delimiter=',')
+                for line in lines:
+                    class_level, base_class = parse_base_class(all_classes)
+                    if class_level == 0:
+                        continue
+
+                    # print(f"Found {class_level}. {base_class}")
+
+                    class_match = match_class(line[1], class_level, base_class)
+                    if class_match == "":
+                        continue
+
+                    print(f"[SELITVE 2024 IMPLEMENTER] Found a match {class_match}.")
+
+                    h = int(line[0])
+                    prof = line[3].split(" ")[0]
+                    pred = line[2]
+
+                    if classes.get(i) is None:
+                        continue
+
+                    if classes[i].get(h) is None:
+                        continue
+
+                    ura: GimSisUra = classes[i][h]
+                    if prof not in ura.profesor.lower():
+                        continue
+
+                    if not (pred in ura.kratko_ime or ura.kratko_ime in pred):
+                        continue
+
+                    uc = line[4]
+                    try:
+                        uc = int(uc)
+                        uc = f"Učilnica {uc}"
+                    except:
+                        pass
+
+                    # Ok, po novem se bo ta modul za selitve imenoval "Paralelepiped",
+                    # ker sem star 5 let in se mi to zdi zelo funni ime
+                    # Hail Markun
+                    classes[i][h].fixed_by_paralelepiped = True
+                    classes[i][h].stara_ucilnica = classes[i][h].ucilnica
+                    classes[i][h].ucilnica = uc
 
     return {"classes": classes, "days": days, "sharepoint_days": sharepoint_days}
 

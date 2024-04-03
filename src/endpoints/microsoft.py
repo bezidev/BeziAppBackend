@@ -12,6 +12,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 
 from .consts import MS_OAUTH_ID, SCOPE, MS_OAUTH_SECRET, async_session, SharepointNotification
+from ..pdfparsers import selitve2024
 
 microsoft = APIRouter()
 
@@ -100,10 +101,15 @@ async def get_sharepoint_files(access_token: str):
         for file in disk_contents.json()["value"]:
             name = file["name"].lower()
             z = re.search("nadome[sš][cč]anj[ea][_ ](3[01]|[12][0-9]|[1-9])\.[ ]*(1[0-2]|[1-9]).*\.pdf", name)
-            if z is None:
-                print(f"[SHAREPOINT] Failure while matching substitutions: {name}")
+            sel = re.search("selit[ev][ev]?[_ ].*\.pdf", name)
+
+            t = (0 if z is not None else (1 if sel is not None else -1))
+
+            if t == -1:
+                print(f"[SHAREPOINT] Failure while matching substitutions or migrations: {name}")
                 csv_name = f'substitutions/{name.lower().replace(".pdf", ".csv")}'
-            else:
+            elif t == 0:
+                # Nadomeščanja
                 try:
                     dan = int(z[1])
                     try:
@@ -115,11 +121,23 @@ async def get_sharepoint_files(access_token: str):
                 except:
                     print(f"[SHAREPOINT] Failure while parsing day: {name}")
                     csv_name = f'substitutions/{name.lower().replace(".pdf", ".csv")}'
+            elif t == 1:
+                print(f"[SHAREPOINT] Parsing migrations: {name}")
+                csv_name = f'substitutions/selitve_raw.csv'
+
             print(f"Parsing {name} as {csv_name}.")
             if os.path.exists(csv_name):
                 print("File already exists, deleting.")
                 os.remove(csv_name)
             tabula.convert_into(file["@microsoft.graph.downloadUrl"], csv_name, output_format="csv", pages='all')
+
+            if t == -1:
+                continue
+
+            if t == 1:
+                await selitve2024.process_migrations()
+                print(f"Done parsing {name} as migration. Result is {csv_name}.")
+
             f = await aiofiles.open(csv_name, mode='r')
             t = []
             for line in await f.readlines():
@@ -208,6 +226,7 @@ def translate_days_into_sharepoint(days: [str]):
     return new_days
 
 
+# Tole vrže ven something in "4A" ali "4MM" style
 def find_base_class(classes):
     all_classes = []
     for day in classes.values():

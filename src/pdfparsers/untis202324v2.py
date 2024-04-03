@@ -1,31 +1,21 @@
 import re
 
+from src.helpers.classes import parse_base_class, match_class
+
 
 def parse(lines, all_classes, classes_archive: dict[int, dict], classes: dict[int, dict], i: int):
     for csv_values in lines:
-        try:
-            for f in all_classes:
-                # seveda obstajajo tudi izjeme, oz. po domače mm, qa, qb
-                if not (len(f) == 2 or (len(f) == 3 and (f == "4MM" or f == "4QA" or f == "4QA" or f == "3MM" or f == "3QA" or f == "3QB" or f == "2QA" or f == "2QB" or f == "1QA" or f == "1QB"))):
-                    continue
-                class_level = int(f[0])
-                base_class = f[1:].upper()
-                break
-        except Exception as e:
-            print(f"[UNTIS 2023/24 v2] Could not obtain class level: {e}, csv_values={csv_values}, skipping")
+        class_level, base_class = parse_base_class(all_classes)
+        if class_level == 0:
             continue
+
         #print(f"Found {class_level}. {base_class}")
 
-        try:
-            regex_match = f"{class_level}[A-HŠ]*\.\.|{class_level}[A-HŠ]*{base_class}[A-HŠ]*"
-        except:
-            print(f"[UNTIS 2023/24 v2] Could not find class_level and base_class")
-        try:
-            class_match = re.findall(regex_match, csv_values[1])[0]
-        except Exception as e:
-            #print(f"[UNTIS 2023/24 v2] No match found for {class_level}. {base_class} and regex {regex_match} with {csv_values[1]}: {e}")
+        class_match = match_class(csv_values[1], class_level, base_class)
+        if class_match == "":
             continue
-        print(f"[UNTIS 2023/24 v2] Match found for {class_level}{base_class} and regex {regex_match} with {csv_values[1]}: {class_match}")
+
+        print(f"[UNTIS 2023/24 v2] Match found for {class_level}{base_class} with {csv_values[1]}: {class_match}")
         if " - " in csv_values[0]:
             h = csv_values[0].split(" - ")
             hours = range(int(h[0]), int(h[1]) + 1)

@@ -4,6 +4,7 @@ import src.pdfparsers.untis202324v2 as untis2324v2
 
 TIPI_NADOMESCANJ = ["Nadomeščanje", "Odpade", "Zaposlitev"]
 
+
 def select_parser(lines, all_classes, classes_archive, classes, i):
     untis = "2023"
     for csv_values in lines:
