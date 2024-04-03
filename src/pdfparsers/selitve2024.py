@@ -16,6 +16,7 @@ async def process_migrations():
         w = None
         day = 0
         month = 0
+        days = []
         for line in lines:
             ok = False
             for p in line:
@@ -35,9 +36,15 @@ async def process_migrations():
                     # trust me bro, to dela
                     # ps. jebeš type anotacije v pythonu
                     await nf.close()
-                nf = await aiofiles.open(f"substitutions/selitve_{day}.{month}.csv", "w+", newline="")
+
+                # Vodstvo očitno ni spretno z Wordom, zato se kar odločijo, da bodo dali nov odstavek, kadarkoli jim
+                # srce poželi
+                nf = await aiofiles.open(f"substitutions/selitve_{day}.{month}.csv", "a" if day in days else "w+", newline="")
                 w = csv.writer(nf)
                 ok = True
+
+                days.append(day)
+
                 break
 
             if ok:
