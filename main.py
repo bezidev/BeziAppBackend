@@ -205,7 +205,7 @@ async def get_timetable(response: Response, date: str | None, authorization: str
     class_level, base_class = parse_base_class(all_classes)
     if class_level == 0:
         print(f"[WARN] Could not match {class_level}{base_class} from {all_classes}")
-        return {"classes": {}, "days": [], "sharepoint_days": []}
+        return {"classes": {0: {}, 1: {}, 2: {}, 3: {}, 4: {}, 5: {}, 6: {}}, "days": days, "sharepoint_days": sharepoint_days}
 
     print(f"[INFO] Parsing timetable for user {account_session.username} {class_level}{base_class}")
 
