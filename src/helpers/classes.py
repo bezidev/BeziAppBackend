@@ -13,6 +13,7 @@ def parse_base_class(all_classes: List[str]) -> (int, str):
     except Exception as e:
         print(f"Could not obtain class level: {e}, skipping")
         return 0, ""
+    return 0, ""
 
 
 def match_class(c, class_level, base_class) -> str:
