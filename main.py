@@ -188,7 +188,6 @@ async def get_timetable(response: Response, date: str | None, authorization: str
         analytics.clear()
         analytics["reset"] = current.day
     if analytics.get(account_session.username) is None:
-        print(f"[ANALYTICS DEBUG] Dodajam v analitiko: {current.day} {analytics['reset']}")
         analytics[account_session.username] = 0
     analytics[account_session.username] += 1
 
@@ -203,9 +202,12 @@ async def get_timetable(response: Response, date: str | None, authorization: str
     sharepoint_days = translate_days_into_sharepoint(days)
     all_classes = find_base_class(classes)
 
-    e = "" if len(all_classes) == 0 else all_classes[0]
+    class_level, base_class = parse_base_class(all_classes)
+    if class_level == 0:
+        print(f"[WARN] Could not match {class_level}{base_class} from {all_classes}")
+        return {"classes": {}, "days": [], "sharepoint_days": []}
 
-    print(f"[INFO] Parsing timetable for user {account_session.username} {e}")
+    print(f"[INFO] Parsing timetable for user {account_session.username} {class_level}{base_class}")
 
     for i, day in enumerate(days):
         for grading in gradings:
@@ -215,6 +217,9 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                 if grading.predmet.lower() in classes[i][n].kratko_ime.lower():
                     classes[i][n].ocenjevanje = True
                     classes[i][n].ocenjevanje_details = grading
+
+    if f"{class_level}{base_class}" == "3A":
+        print(f"[BEFORE] {classes}")
 
     for i, day in enumerate(sharepoint_days):
         for n in classes[i].keys():
@@ -241,6 +246,9 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                     continue
                 classes = select_parser(lines, all_classes, classes_archive, classes, i)
 
+        if i == 4 and f"{class_level}{base_class}" == "3A":
+            print(f"[AFTER 1] {classes}")
+
         # Paralelepiped povozi nadomeščanja, ker "Modul za nadomeščanja" ni tako kul ime :))))))))))))
         for migration_filename in migrations_filenames:
             if not os.path.exists(migration_filename):
@@ -250,12 +258,6 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                 ls = await f.readlines()
                 lines = csv.reader(ls, delimiter=',')
                 for line in lines:
-                    class_level, base_class = parse_base_class(all_classes)
-                    if class_level == 0:
-                        continue
-
-                    # print(f"Found {class_level}. {base_class}")
-
                     class_match = match_class(line[1], class_level, base_class)
                     if class_match == "":
                         continue
@@ -294,6 +296,9 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                     classes[i][h].ucilnica = uc
 
                     print(f"[SELITVE 2024 IMPLEMENTER] Implementirana selitev {classes[i][h].stara_ucilnica} -> {classes[i][h].ucilnica} za {line[1]}.")
+
+    if f"{class_level}{base_class}" == "3A":
+        print(f"[AFTER 2] {classes}")
 
     return {"classes": classes, "days": days, "sharepoint_days": sharepoint_days}
 
