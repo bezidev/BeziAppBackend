@@ -20,8 +20,7 @@ async def process_migrations():
         for line in lines:
             ok = False
             for p in line:
-                r = re.search("(ponedeljek|torek|sreda|[cč]etrtek|petek|sobota|nedelja)[, ][ ]?([0-9])[. ][ ]?(["
-                              "0-9])[. ][ ]?", p.lower())
+                r = re.search("(ponedeljek|torek|sreda|[cč]etrtek|petek|sobota|nedelja)[, ][ ]?(\d+)[. ][ ]?(\d+)[.]?[ ]?", p.lower())
                 if r is None:
                     continue
                 print(f"[MIGRATIONS 2024 PARSER] Matched {p.lower()} to day description.")
