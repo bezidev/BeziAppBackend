@@ -82,6 +82,7 @@ async def process_migrations():
                 # sej ne, da v nadomeščanjih uporabljajo format 4A, tukaj pa 4. a also, kadar so maturitetne zadeve,
                 # je edino logično, da ne uporabijo 4AB..., kot to delajo na jebenih nadomeščanjih, temveč napišejo
                 # "Priprave"
+                # TODO: In more recent news, včasih napišejo FI4 (Filozofija 4) kot razred.
                 # na kakšnem svetu živimo jao bože
                 raz = raz.upper()
                 r = re.search("([1-4])[.]?[ ]?([A-H|Š])", raz)
