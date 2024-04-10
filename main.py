@@ -294,11 +294,11 @@ async def get_timetable(response: Response, date: str | None, authorization: str
                     print(f"[SELITVE 2024 IMPLEMENTER] Implementirana selitev {classes[i][h].stara_ucilnica} -> {classes[i][h].ucilnica} za {line[1]}.")
 
     # Ročni popravki
-    if "2A" in all_classes and "11.4" in sharepoint_days:
-        classes[3][6].odpade = False
-        classes[3][6].implicitno_odpade = False
-        classes[4][6].odpade = True
-        classes[4][6].implicitno_odpade = True
+    #if "2A" in all_classes and "11.4" in sharepoint_days:
+    #    classes[3][6].odpade = False
+    #    classes[3][6].implicitno_odpade = False
+    #    classes[4][6].odpade = True
+    #    classes[4][6].implicitno_odpade = True
 
     return {"classes": classes, "days": days, "sharepoint_days": sharepoint_days}
 
