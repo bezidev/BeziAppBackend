@@ -153,7 +153,7 @@ async def open_door(response: Response, door_id: int, authorization: str = Heade
     # Če nima izbire, defaultaj na defaultni Ringo URL
     if url is None or url == "DEFAULT_TOKEN":
         async with aiofiles.open("doors.log", "a") as f:
-            await f.write(f"[RINGO] Vstop s skupnim ključem s strani {account_session.username} ob {datetime.datetime.now().strftime('%d/%m/%Y, %H:%M:%S')}.\n")
+            await f.write(f"[RINGO] Vstop s skupnim ključem na vrata {door_id} s strani {account_session.username} ob {datetime.datetime.now().strftime('%d/%m/%Y, %H:%M:%S')}.\n")
         url = os.environ.get("RINGO_TOKEN")
 
     r = RingoAPI(url)
