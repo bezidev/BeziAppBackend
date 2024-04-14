@@ -59,6 +59,9 @@ async def process_migrations():
             for i in range(2):
                 k = i * 5  # zamik
 
+                if len(line) <= k:
+                    continue
+
                 h = line[k]
                 if h == "":
                     continue
