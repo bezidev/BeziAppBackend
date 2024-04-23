@@ -59,11 +59,11 @@ async def process_migrations():
             for i in range(2):
                 k = i * 5  # zamik
 
-                if len(line) <= k:
+                if len(line) <= k + 1:
                     continue
 
                 h = line[k]
-                if h == "":
+                if h == "" or line[k+1] == "":
                     continue
 
                 raz = line[k+1].lower()
@@ -78,9 +78,17 @@ async def process_migrations():
                     print(f"[MIGRATIONS 2024 PARSER] Failure while parsing hour. Error: {e}. Line: {line}/{i}")
                     continue
 
+                # nova učilnica
+                # - 003
+                # - iz 206 v 004
+                # pač ljubi bog
+                nova_ucilnica = line[k+4].upper()
+                r2 = re.search(r"IZ .* V (.*)", nova_ucilnica)
+                if r2 is not None:
+                    nova_ucilnica = r2.group(1)
+
                 predmet = line[k+2].upper()
                 ucitelj = line[k+3].lower()
-                nova_ucilnica = line[k+4].upper() # baje ne smemo pretvoriti v int, saj je vrednost lahko tudi ČIT
 
                 # sej ne, da v nadomeščanjih uporabljajo format 4A, tukaj pa 4. a also, kadar so maturitetne zadeve,
                 # je edino logično, da ne uporabijo 4AB..., kot to delajo na jebenih nadomeščanjih, temveč napišejo
