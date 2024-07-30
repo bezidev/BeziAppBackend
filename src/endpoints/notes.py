@@ -23,6 +23,7 @@ async def upload_new_note(
         type: str = Form(),
         authorization: str = Header(),
 ):
+    return "Sistem za nalaganje datotek ne bo na voljo vsaj do 21. 8. 2024 zaradi vzdrževalnih del, ki potekajo na podatkovni bazi in posledične nadgradnje na BežiApp Evolved. Hvala za razumevanje."
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
@@ -61,6 +62,7 @@ async def upload_new_note(
 
 @notes.get("/notes", status_code=status.HTTP_200_OK)
 async def get_notes(response: Response, authorization: str = Header()):
+    return []
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
@@ -79,6 +81,7 @@ async def get_notes(response: Response, authorization: str = Header()):
 
 @notes.delete("/notes", status_code=status.HTTP_200_OK)
 async def delete_note(response: Response, id: str = Form(), authorization: str = Header()):
+    return "Sistem za nalaganje datotek ne bo na voljo vsaj do 21. 8. 2024 zaradi vzdrževalnih del, ki potekajo na podatkovni bazi in posledične nadgradnje na BežiApp Evolved. Hvala za razumevanje."
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
@@ -111,6 +114,7 @@ async def delete_note(response: Response, id: str = Form(), authorization: str =
 
 @notes.get("/notes/get", status_code=status.HTTP_200_OK)
 async def get_note(response: Response, id: str, authorization: str = Header()):
+    return "Sistem za nalaganje datotek ne bo na voljo vsaj do 21. 8. 2024 zaradi vzdrževalnih del, ki potekajo na podatkovni bazi in posledične nadgradnje na BežiApp Evolved. Hvala za razumevanje."
     if authorization == "" or sessions.get(authorization) is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
