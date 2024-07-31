@@ -5,8 +5,9 @@ import json
 import os
 import io
 import time
+import uuid
 
-from gimsisapi.formtagparser import GimSisUra
+from gimsisapi.formtagparser import GimSisUra, Grade
 
 import src.pdfparsers.temppdf as temppdf
 
@@ -421,6 +422,84 @@ async def get_grades(response: Response, year: str | None, authorization: str = 
         await account_session.login()
         grades = await account_session.gimsis_session.fetch_grades(year=year)
     return {"grades": grades["grades"], "school_years": grades["school_years"]}
+
+
+@app.get("/grades/export", status_code=status.HTTP_200_OK)
+async def grade_export_evolved(response: Response, authorization: str = Header()):
+    if authorization == "" or sessions.get(authorization) is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    account_session = sessions[authorization]
+    if account_session.oauth2_session:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+    if account_session.username == TEST_USERNAME:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return
+
+    years = [
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+    ]
+
+    yearJson = {
+        "2020": [],
+        "2021": [],
+        "2022": [],
+        "2023": [],
+    }
+
+    for year in years:
+        try:
+            grades = await account_session.gimsis_session.fetch_grades(year=year)
+        except Exception as e:
+            if str(e) == "not enough values to unpack (expected 2, got 0)":
+                continue
+            print(f"[GRADE EXPORT] Error: {e}")
+            response.status_code = status.HTTP_412_PRECONDITION_FAILED
+            return
+        subjects = []
+        for subject in grades["grades"]["subjects"]:
+            s = {
+                "name": subject["name"],
+                "final_grade": subject["final"],
+                "first_period": [],
+                "second_period": [],
+            }
+            for i, v in enumerate(["first_period", "second_period"]):
+                for grade in subject[i]["grades"]:
+                    grade: Grade = grade
+                    gid = str(uuid.uuid4())
+                    s[v].append({
+                        "grade_id": gid,
+                        "grade": grade.ocena,
+                        "date": grade.datum,
+                        "teacher": grade.ucitelj,
+                        "grading_1": grade.tip,
+                        "grading_type": grade.opis_ocenjevanja,
+                        "grading_2": grade.rok,
+                        "is_finalized": grade.je_zakljucena,
+                        "superseded_by": None,
+                    })
+                    for sup in grade.popravljane_ocene:
+                        grade: Grade = sup
+                        s[v].append({
+                            "grade_id": str(uuid.uuid4()),
+                            "grade": grade.ocena,
+                            "date": grade.datum,
+                            "teacher": grade.ucitelj,
+                            "grading_1": grade.tip,
+                            "grading_type": grade.opis_ocenjevanja,
+                            "grading_2": grade.rok,
+                            "is_finalized": False,
+                            "superseded_by": gid,
+                        })
+            subjects.append(s)
+        yearJson[year] = subjects
+    return Response(content=json.dumps(yearJson), media_type="application/json")
+
 
 
 @app.get("/user/info", status_code=status.HTTP_200_OK)
